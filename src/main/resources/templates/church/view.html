@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + (church.name != null and !#strings.isEmpty(church.name) ? church.name : 'Biserică')}">Biserică</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${church.name != null and !#strings.isEmpty(church.name) ? church.name : 'Biserică'}">Biserică</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/settings/church}" class="header-action-icon" aria-label="Setări biserică" title="Setări biserică" data-i18n-aria-label="church.settings" data-i18n-title="church.settings">
+        <span class="material-icons" aria-hidden="true">tune</span>
+      </a>
+      <a th:href="@{/church/edit}" class="button primary header-action-icon" aria-label="Editează" title="Editează" data-i18n-aria-label="actions.edit" data-i18n-title="actions.edit">
+        <span class="material-icons" aria-hidden="true">edit</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <section class="church-card">
+    <div class="church-hero">
+      <div class="church-avatar-large">
+        <img th:if="${avatarEnabled and church.avatarUrl != null and !#strings.isEmpty(church.avatarUrl)}"
+             th:src="${church.avatarUrl}" alt="Avatar biserică" />
+        <span th:if="${!avatarEnabled or church.avatarUrl == null or #strings.isEmpty(church.avatarUrl)}">B</span>
+      </div>
+      <div class="church-hero-copy">
+        <h2 th:text="${church.name != null and !#strings.isEmpty(church.name) ? church.name : 'Biserica activă'}">Biserica activă</h2>
+        <p class="muted" th:if="${church.address != null and !#strings.isEmpty(church.address)}" th:text="${church.address}">Adresă</p>
+        <p class="muted" th:if="${church.address == null or #strings.isEmpty(church.address)}" data-i18n="church.addressNotSet">Adresa nu este setată încă.</p>
+      </div>
+    </div>
+
+    <div class="church-info-grid">
+      <section class="church-info-item">
+        <h3 data-i18n="settings.address">Adresă</h3>
+        <p th:text="${church.address != null and !#strings.isEmpty(church.address) ? church.address : '—'}">—</p>
+      </section>
+      <section class="church-info-item">
+        <h3 data-i18n="settings.pastor">Pastor</h3>
+        <p th:text="${church.pastorName != null and !#strings.isEmpty(church.pastorName) ? church.pastorName : '—'}">—</p>
+        <p class="muted" th:if="${church.pastorPhone != null and !#strings.isEmpty(church.pastorPhone)}">
+          <a th:href="'tel:' + ${church.pastorPhone}" class="plain-link" th:text="${church.pastorPhone}">telefon</a>
+        </p>
+      </section>
+      <section class="church-info-item">
+        <h3 data-i18n="settings.secretary">Secretar</h3>
+        <p th:text="${church.secretaryName != null and !#strings.isEmpty(church.secretaryName) ? church.secretaryName : '—'}">—</p>
+        <p class="muted" th:if="${church.secretaryPhone != null and !#strings.isEmpty(church.secretaryPhone)}">
+          <a th:href="'tel:' + ${church.secretaryPhone}" class="plain-link" th:text="${church.secretaryPhone}">telefon</a>
+        </p>
+      </section>
+      <section class="church-info-item">
+        <h3 data-i18n="settings.treasurer">Trezorier</h3>
+        <p th:text="${church.treasurerName != null and !#strings.isEmpty(church.treasurerName) ? church.treasurerName : '—'}">—</p>
+        <p class="muted" th:if="${church.treasurerPhone != null and !#strings.isEmpty(church.treasurerPhone)}">
+          <a th:href="'tel:' + ${church.treasurerPhone}" class="plain-link" th:text="${church.treasurerPhone}">telefon</a>
+        </p>
+      </section>
+    </div>
+  </section>
+</div>
+</body>
+</html>

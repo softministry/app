@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Finanțe'}">Finanțe</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell finance-shell">
+  <header class="page-header">
+    <div>
+      <h1>Finanțe</h1>
+      <p class="muted">Sumar și tranzacții, după modelul din aplicația Angular.</p>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <section class="finance-grid">
+    <div class="finance-main">
+      <div class="finance-summary" th:if="${hasTransactions}">
+        <section class="finance-summary-card finance-balance-card">
+          <p class="finance-summary-label">Sold curent</p>
+          <p class="finance-summary-value" th:text="${@uiLabels.moneyLei(currentBalance)}">0,00 lei</p>
+        </section>
+        <section class="finance-summary-card finance-income-card">
+          <p class="finance-summary-label">Venituri</p>
+          <p class="finance-summary-value" th:text="${@uiLabels.moneyLei(totalIncome)}">0,00 lei</p>
+        </section>
+        <section class="finance-summary-card finance-expense-card">
+          <p class="finance-summary-label">Cheltuieli</p>
+          <p class="finance-summary-value" th:text="${@uiLabels.moneyLei(totalExpenses)}">0,00 lei</p>
+        </section>
+      </div>
+
+      <section class="settings-card finance-table-card">
+        <div class="section-head finance-section-head">
+          <div>
+            <h2>Tranzacții</h2>
+            <p class="muted" th:text="${transactions.size()} + ' înregistrări'">0 înregistrări</p>
+          </div>
+        </div>
+
+        <div class="table-scroll" th:if="${!transactions.empty}">
+          <table class="stripe finance-table">
+            <thead>
+            <tr>
+              <th>Tip</th>
+              <th>Nume</th>
+              <th>Descriere</th>
+              <th class="amount-column">Sumă</th>
+              <th class="actions">Acțiuni</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="transaction : ${transactions}">
+              <td class="finance-type-cell">
+                <span class="finance-type-pill"
+                      th:classappend="${transaction.type == 'income'} ? ' is-income' : ' is-expense'"
+                      th:text="${transaction.type == 'income' ? 'venit' : 'cheltuială'}">venit</span>
+              </td>
+              <td th:text="${transaction.name}">Nume</td>
+              <td th:text="${transaction.description != null and !#strings.isEmpty(transaction.description) ? transaction.description : '—'}">Descriere</td>
+              <td class="finance-amount-cell" th:text="${@uiLabels.moneyLei(transaction.amount)}">0,00 lei</td>
+              <td class="actions">
+                <form th:action="@{'/finance/' + ${transaction.id} + '/delete'}" method="post" class="inline-form">
+                  <button type="submit" class="icon-button icon-button-danger" aria-label="Șterge">
+                    <span class="material-icons" aria-hidden="true">delete</span>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div th:if="${transactions.empty}" class="finance-empty-state">
+          Nu există tranzacții salvate momentan.
+        </div>
+      </section>
+    </div>
+
+    <aside class="settings-card finance-sidebar">
+      <h2>Adaugă tranzacție</h2>
+      <form method="post" th:action="@{/finance}" th:object="${transactionForm}" class="settings-form">
+        <label class="settings-field">
+          <span>Tip</span>
+          <select th:field="*{type}" required>
+            <option value="">Selectează</option>
+            <option value="income">Venit</option>
+            <option value="expense">Cheltuială</option>
+          </select>
+        </label>
+
+        <label class="settings-field">
+          <span>Nume</span>
+          <input type="text" th:field="*{name}" required />
+        </label>
+
+        <label class="settings-field">
+          <span>Descriere</span>
+          <input type="text" th:field="*{description}" />
+        </label>
+
+        <label class="settings-field">
+          <span>Sumă (RON)</span>
+          <input type="number" th:field="*{amount}" min="0.01" step="0.01" required />
+        </label>
+
+        <div class="settings-actions">
+          <button type="submit" class="button primary">Adaugă</button>
+          <a th:href="@{/finance}" class="button ghost">Reset</a>
+        </div>
+      </form>
+
+      <p class="muted finance-help">
+        Backend-ul financiar actual este comun, fără separare pe biserică. Selectorul din header rămâne disponibil pentru consistență cu restul aplicației.
+      </p>
+    </aside>
+  </section>
+</div>
+</body>
+</html>

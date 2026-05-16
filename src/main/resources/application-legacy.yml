@@ -1,0 +1,24 @@
+server:
+  port: 8085
+
+spring:
+  jpa:
+    # Protect the original DB: don't auto-mutate schema from the Thymeleaf app.
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        show_sql: false
+  flyway:
+    enabled: false
+
+theme:
+  app:
+    title: "Church Administration Platform (legacy-db)"
+
+logging:
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF

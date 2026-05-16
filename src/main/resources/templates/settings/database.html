@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Import/Export DB'}">Import/Export DB</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1>Import/Export DB</h1>
+      <p class="settings-breadcrumb">Administrare / Import-Export bază de date</p>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <section class="settings-card system-settings-card">
+    <div class="system-v2-grid">
+      <section class="system-v2-card">
+        <header class="system-v2-head">
+          <h3 data-i18n="settings.systemDatabase">Bază de Date</h3>
+          <p class="muted compact" data-i18n="settings.systemDatabaseHint">Export și import backup.</p>
+        </header>
+        <div class="system-v2-rows">
+          <div class="system-v2-row">
+            <span data-i18n="settings.systemExportFull">Export complet</span>
+            <a th:href="@{/settings/system/export(mode='full')}" class="button ghost js-export-link" data-i18n="settings.systemExport">Export</a>
+          </div>
+          <div class="system-v2-row" id="exportChecksumRow" style="display:none; align-items:flex-start;">
+            <span data-i18n="settings.systemExportChecksumLabel">Checksum SHA-256</span>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+              <code id="exportChecksumValue" style="max-width:320px; word-break:break-all;"></code>
+              <button type="button" id="copyExportChecksumBtn" class="button ghost" data-i18n="settings.systemCopyChecksum">Copiază checksum</button>
+            </div>
+          </div>
+          <form method="post" th:action="@{/settings/system/import}" enctype="multipart/form-data" class="system-v2-row system-v2-import-row">
+            <span data-i18n="settings.systemImportArchive">Import arhivă</span>
+            <div class="system-v2-import-controls">
+              <input type="file" name="file" accept=".zip" />
+              <button type="submit" th:formaction="@{/settings/system/import/validate}" class="button ghost">Dry-run</button>
+              <button type="submit" class="button ghost" data-i18n="settings.systemImport">Importă</button>
+            </div>
+            <small class="muted">.zip, max 300 MB</small>
+          </form>
+        </div>
+      </section>
+    </div>
+  </section>
+</div>
+
+<script>
+  (function () {
+    const i18n = window.teamleafI18n;
+    const t = function (key, fallback) {
+      if (i18n && typeof i18n.t === 'function') {
+        return i18n.t(key, fallback);
+      }
+      return fallback;
+    };
+    const links = Array.from(document.querySelectorAll('.js-export-link'));
+    if (!links.length) return;
+
+    const checksumRow = document.getElementById('exportChecksumRow');
+    const checksumValue = document.getElementById('exportChecksumValue');
+    const copyBtn = document.getElementById('copyExportChecksumBtn');
+
+    function parseFilename(disposition) {
+      if (!disposition) return 'export.zip';
+      const match = disposition.match(/filename="([^"]+)"/i);
+      return match && match[1] ? match[1] : 'export.zip';
+    }
+
+    async function copyChecksum() {
+      const value = checksumValue ? checksumValue.textContent : '';
+      if (!value) return;
+      try {
+        await navigator.clipboard.writeText(value);
+        copyBtn.textContent = t('settings.systemCopyChecksumDone', 'Copiat');
+      } catch (error) {
+        copyBtn.textContent = t('settings.systemCopyChecksumFailed', 'Nu s-a putut copia');
+      }
+      setTimeout(function () {
+        copyBtn.textContent = t('settings.systemCopyChecksum', 'Copiază checksum');
+      }, 1800);
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', copyChecksum);
+    }
+
+    links.forEach(function (link) {
+      link.addEventListener('click', async function (event) {
+        event.preventDefault();
+        const url = link.getAttribute('href');
+        if (!url) return;
+
+        const initialText = link.textContent;
+        link.classList.add('is-loading');
+        link.textContent = t('settings.systemExportBusy', 'Se exportă...');
+
+        if (checksumRow) checksumRow.style.display = 'none';
+        if (checksumValue) checksumValue.textContent = '';
+
+        try {
+          const response = await fetch(url, { credentials: 'same-origin' });
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+
+          const blob = await response.blob();
+          const filename = parseFilename(response.headers.get('Content-Disposition'));
+          const checksum = response.headers.get('X-Checksum-SHA256');
+
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+          anchor.href = objectUrl;
+          anchor.download = filename;
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          URL.revokeObjectURL(objectUrl);
+
+          if (checksumRow && checksumValue && checksum) {
+            checksumValue.textContent = checksum;
+            checksumRow.style.display = 'flex';
+          }
+        } catch (error) {
+          alert(t('settings.systemExportFailed', 'Exportul a eșuat. Încearcă din nou.'));
+        } finally {
+          link.classList.remove('is-loading');
+          link.textContent = initialText;
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

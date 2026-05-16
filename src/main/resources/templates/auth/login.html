@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>Autentificare</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="auth-login-shell">
+  <div class="auth-login-layout">
+    <aside class="auth-login-hero">
+      <p class="eyebrow">Church Administration Platform</p>
+      <h1 data-i18n="auth.heroTitle">Coordonează lucrarea pastorală, într-un singur loc.</h1>
+      <p class="auth-login-hero-subtitle" data-i18n="auth.heroSubtitle">
+        Urmărește persoanele, grupurile și acțiunile pastorale într-un flux clar pentru întreaga echipă.
+      </p>
+      <ul class="auth-login-highlights">
+        <li data-i18n="auth.highlight1">Flux de lucru pastoral: semnal → contact → progres → rezolvat</li>
+        <li data-i18n="auth.highlight2">Istoric complet pe fiecare persoană</li>
+        <li data-i18n="auth.highlight3">Prioritizare clară pentru cazurile active</li>
+      </ul>
+    </aside>
+
+    <section class="card auth-card auth-login-card">
+      <div class="auth-login-head">
+        <h2 data-i18n="auth.signInTitle">Autentificare</h2>
+        <p data-i18n="auth.signInSubtitle">Conectează-te cu contul de lucru pentru a continua.</p>
+      </div>
+
+      <section th:if="${loginError}" class="flash flash-error" data-i18n="auth.loginError">
+        Credentiale invalide. Verifică datele introduse.
+      </section>
+      <section th:if="${logoutSuccess}" class="flash flash-success" data-i18n="auth.logoutSuccess">
+        Te-ai deconectat cu succes.
+      </section>
+      <section th:if="${passwordResetSuccess}" class="flash flash-success" data-i18n="auth.passwordResetSuccess">
+        Parola a fost resetată cu succes. Te poți autentifica acum.
+      </section>
+      <section th:if="${passwordlessLoginEnabled}" class="flash flash-success" data-i18n="auth.passwordlessModeHint">
+        Autentificare rapidă activă. După intrare, actualizează utilizatorul admin și setează parolă.
+      </section>
+
+      <form method="post" th:action="@{/login}" class="auth-login-form">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input th:if="${!requirePasswordForLogin}" type="hidden" name="username" th:value="${defaultLoginUsername}" />
+
+        <label class="auth-login-field" th:if="${requirePasswordForLogin}">
+          <span data-i18n="auth.usernameLabel">Username</span>
+          <input type="text" name="username" autocomplete="username" required />
+        </label>
+
+        <label class="auth-login-field" th:if="${requirePasswordForLogin}">
+          <span data-i18n="auth.passwordLabel">Parolă</span>
+          <div class="auth-login-password-wrap">
+            <input type="password" name="password" autocomplete="current-password" data-login-password-input />
+            <button type="button"
+                    class="icon-button"
+                    aria-label="Arată parola"
+                    data-i18n-aria-label="auth.showPassword"
+                    data-password-toggle>
+              <span class="material-icons" aria-hidden="true">visibility</span>
+            </button>
+          </div>
+        </label>
+
+        <div class="auth-login-actions">
+          <button type="submit" class="button primary auth-login-submit" data-i18n="auth.signInButton">Intră în aplicație</button>
+          <a th:if="${requirePasswordForLogin}" th:href="@{/forgot-password}" class="link" data-i18n="auth.forgotPassword">Ai uitat parola?</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var input = document.querySelector("[data-login-password-input]");
+    var toggle = document.querySelector("[data-password-toggle]");
+    if (!input || !toggle) return;
+
+    toggle.addEventListener("click", function () {
+      var hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      var icon = toggle.querySelector(".material-icons");
+      if (icon) icon.textContent = hidden ? "visibility_off" : "visibility";
+      var i18n = window.teamleafI18n;
+      var showLabel = i18n && i18n.t ? i18n.t("auth.showPassword", "Show password") : "Show password";
+      var hideLabel = i18n && i18n.t ? i18n.t("auth.hidePassword", "Hide password") : "Hide password";
+      toggle.setAttribute("aria-label", hidden ? hideLabel : showLabel);
+    });
+  })();
+</script>
+</body>
+</html>

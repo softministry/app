@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro">
+<body>
+<th:block th:fragment="attendanceDetails">
+  <form method="post" th:action="@{/attendance}" class="attendance-editor-form">
+    <input type="hidden" name="date" th:value="${attendanceDate}" />
+    <input type="hidden" name="session" th:value="${selectedSession.name()}" />
+    <input type="hidden" name="groupId" th:value="${selectedGroupId}" />
+
+    <div class="attendance-details-heading">
+      <div>
+        <p class="eyebrow" data-i18n="attendance.session">Program</p>
+        <h2 th:text="${#temporals.format(attendanceDate, 'dd-MM-yyyy') + ' · ' + @uiLabels.attendanceSession(selectedSession)}">
+          20-04-2026 · Implicit
+        </h2>
+        <p class="muted" th:if="${selectedGroupName != null and !#strings.isEmpty(selectedGroupName)}"
+           data-i18n-template="attendance.filteredByGroup"
+           th:attr="data-i18n-param-group=${selectedGroupName}">Filtrat pe grup</p>
+      </div>
+      <div class="attendance-details-counts">
+        <span data-i18n-template="attendance.presentCount" th:attr="data-i18n-param-count=${presentCount}">0 prezenți</span>
+        <span data-i18n-template="attendance.absentCount" th:attr="data-i18n-param-count=${absentCount}">0 absenți</span>
+      </div>
+    </div>
+
+    <div class="attendance-editor-toolbar">
+      <label class="attendance-modal-search">
+        <span data-i18n="attendance.searchPerson">Caută persoană</span>
+        <input type="text" placeholder="Filtrează după nume..." data-i18n-placeholder="attendance.searchPersonPlaceholder" data-attendance-modal-search />
+      </label>
+
+      <button type="submit" class="button primary" data-i18n="attendance.saveAttendance">Salvează prezența</button>
+    </div>
+
+    <div class="table-scroll attendance-details-scroll">
+      <table class="stripe attendance-details-table">
+        <thead>
+        <tr>
+          <th>#</th>
+          <th data-i18n="persons.name">Nume</th>
+          <th data-i18n="memberType.filterLabel">Tip</th>
+          <th data-i18n="persons.role">Rol</th>
+          <th data-i18n="persons.phone">Telefon</th>
+          <th data-i18n="attendance.present">Prezent</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row, stat : ${attendanceRows}"
+            data-attendance-detail-row
+            th:attr="data-name=${row.person.fullName}"
+            th:classappend="${row.present} ? 'is-present' : 'is-absent'">
+          <td th:text="${stat.count + '.'}">1.</td>
+          <td>
+            <input type="hidden" name="personIds" th:value="${row.person.id}" />
+            <strong th:text="${row.person.fullName}">Nume persoană</strong>
+          </td>
+          <td class="member-type-cell">
+            <span th:if="${row.person.memberType != null}"
+                  class="member-type-label"
+                  th:text="${@uiLabels.memberType(row.person.memberType)}"
+                  th:attr="data-i18n=${'memberType.' + row.person.memberType.name()}"></span>
+            <span th:if="${row.person.memberType == null}">—</span>
+          </td>
+          <td class="person-role-cell" th:text="${row.person.churchRole != null and !#strings.isEmpty(row.person.churchRole) ? row.person.churchRole : '—'}">—</td>
+          <td class="person-phone-cell" th:text="${row.person.phone != null and !#strings.isEmpty(row.person.phone) ? row.person.phone : '—'}">—</td>
+          <td>
+            <label class="attendance-checkbox">
+              <input type="checkbox" name="presentPersonIds" th:value="${row.person.id}" th:checked="${row.present}" />
+              <span data-i18n="attendance.present">Prezent</span>
+            </label>
+          </td>
+        </tr>
+        <tr th:if="${attendanceRows.empty}">
+          <td colspan="6" class="muted" data-i18n="attendance.noPeopleInActiveChurch">Nu există persoane în biserica activă.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+</th:block>
+</body>
+</html>

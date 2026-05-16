@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ministryadmin.web
+  servlet:
+    multipart:
+      max-file-size: 320MB
+      max-request-size: 320MB
+  config:
+    import:
+      - optional:file:${user.home}/ChurchAdministrationPlatform/config/runtime-mode.properties
+  main:
+    headless: false
+  datasource:
+    url: jdbc:h2:file:${ministryadmin.desktop.database-file-base};AUTO_SERVER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: true
+  thymeleaf:
+    mode: HTML
+    cache: false
+
+  flyway:
+    enabled: false
+
+theme:
+  app:
+    title: "Church Administration Platform"
+
+logging:
+  file:
+    name: ${CHURCH_ADMINISTRATION_PLATFORM_LOG_FILE:${MINISTRYADMIN_LOG_FILE:${ministryadmin.desktop.logs-dir}/app.log}}
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
+
+ministryadmin:
+  desktop:
+    base-url: ${app.base-url:http://localhost}
+    runtime-mode: prod
+    home-dir: ${user.home}/ChurchAdministrationPlatform
+    data-dir: ${ministryadmin.desktop.home-dir}/data
+    uploads-dir: ${ministryadmin.desktop.home-dir}/uploads
+    backups-dir: ${ministryadmin.desktop.home-dir}/backups
+    logs-dir: ${ministryadmin.desktop.home-dir}/logs
+    database-file-base: ${ministryadmin.desktop.data-dir}/ministryadmin-db
+    open-browser-on-start: true
+    startup-path: /dashboard
+    keep-in-dock: true
+    control-window:
+      enabled: true
+    shutdown:
+      enabled: true
+    backup:
+      enabled: true
+      initial-delay-ms: 120000
+      interval-ms: 86400000
+      retention-days: 30

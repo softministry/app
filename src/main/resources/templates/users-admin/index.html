@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Administrare utilizatori'}">Administrare utilizatori</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Sistem</p>
+      <h1>Administrare utilizatori</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <div class="card-grid">
+    <section class="card card-wide">
+      <div class="section-heading">
+        <div>
+          <h2>Utilizatori</h2>
+          <p class="muted">Gestionează conturile și rolurile din aplicație.</p>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="stripe users-admin-table">
+          <thead>
+          <tr>
+            <th>Username</th>
+            <th>Rol</th>
+            <th>Ultima autentificare</th>
+            <th>Rânduri / pagină</th>
+            <th class="actions">Acțiuni</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="u : ${users}">
+            <td th:text="${u.username}">admin</td>
+            <td th:text="${u.role != null and !#strings.isEmpty(u.role) ? u.role : '—'}">ADMIN</td>
+            <td th:text="${u.lastLogin != null ? u.lastLogin : '—'}">—</td>
+            <td th:text="${u.rowsPerPage != null ? u.rowsPerPage : '—'}">—</td>
+            <td class="actions">
+              <a th:href="@{/admin/users(edit=${u.id})}" class="icon-button" aria-label="Editează" title="Editează">
+                <span class="material-icons" aria-hidden="true">edit</span>
+              </a>
+              <form th:action="@{'/admin/users/' + ${u.id} + '/delete'}" method="post" class="inline-form">
+                <button type="submit" class="icon-button icon-button-danger" aria-label="Șterge" title="Șterge">
+                  <span class="material-icons" aria-hidden="true">delete</span>
+                </button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${users == null or users.empty}">
+            <td colspan="5" class="muted">Nu există utilizatori.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card users-admin-create-card">
+      <div class="section-heading">
+        <div>
+          <h2>Adaugă utilizator</h2>
+          <p class="muted">Configurează un cont nou cu rol și date de recuperare.</p>
+        </div>
+      </div>
+      <form method="post" th:action="@{/admin/users}" th:object="${createForm}" class="event-form users-admin-create-form">
+        <div class="users-admin-form-grid">
+          <label>
+            <span>Username</span>
+            <input type="text" th:field="*{username}" required />
+          </label>
+          <label>
+            <span>Rol</span>
+            <select th:field="*{role}">
+              <option th:each="item : ${roleOptions}" th:value="${item}" th:text="${item}">VIEWER</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="users-admin-password-block">
+          <label class="users-admin-password-toggle" th:if="${!requirePasswordAtCreate}">
+            <input type="hidden" name="createPasswordMode" value="none" data-create-password-mode />
+            <span data-i18n="usersAdmin.usePassword">Use password</span>
+            <input type="checkbox" class="ios-switch" data-create-password-toggle aria-label="Use password" />
+          </label>
+          <label data-create-password-row th:classappend="${!requirePasswordAtCreate} ? ' is-hidden' : ''">
+            <span>Parolă</span>
+            <input type="password" th:field="*{password}" th:required="${requirePasswordAtCreate}" th:disabled="${!requirePasswordAtCreate}" data-create-password-input />
+          </label>
+        </div>
+
+        <div class="users-admin-form-grid">
+          <label>
+            <span th:text="${securityQuestionOne}">Întrebarea 1</span>
+            <input type="text" th:field="*{answerOne}" required />
+          </label>
+          <label>
+            <span th:text="${securityQuestionTwo}">Întrebarea 2</span>
+            <input type="text" th:field="*{answerTwo}" required />
+          </label>
+        </div>
+
+        <div class="form-actions users-admin-actions">
+          <button type="submit" class="button primary">Creează utilizator</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" th:if="${editingId != null and editForm != null}">
+      <h2>Editează utilizator</h2>
+      <form method="post"
+            th:action="@{'/admin/users/' + ${editingId}}"
+            th:object="${editForm}"
+            class="event-form">
+        <label>
+          <span>Username</span>
+          <input type="text" th:field="*{username}" required />
+        </label>
+        <label>
+          <span>Parolă nouă (opțional)</span>
+          <input type="password" th:field="*{password}" />
+        </label>
+        <label>
+          <span>Rol</span>
+          <select th:field="*{role}">
+            <option th:each="item : ${roleOptions}" th:value="${item}" th:text="${item}">VIEWER</option>
+          </select>
+        </label>
+        <label>
+          <span th:text="${securityQuestionOne + ' (opțional - actualizare)'}">Întrebarea 1</span>
+          <input type="text" th:field="*{answerOne}" />
+        </label>
+        <label>
+          <span th:text="${securityQuestionTwo + ' (opțional - actualizare)'}">Întrebarea 2</span>
+          <input type="text" th:field="*{answerTwo}" />
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="button primary">Salvează</button>
+          <a th:href="@{/admin/users}" class="link-button">Anulează</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+<script>
+  (function () {
+    var passwordInput = document.querySelector("[data-create-password-input]");
+    var requirePasswordAtCreate = !!(passwordInput && passwordInput.required);
+    if (requirePasswordAtCreate) {
+      return;
+    }
+    var modeInput = document.querySelector("[data-create-password-mode]");
+    var toggle = document.querySelector("[data-create-password-toggle]");
+    var input = document.querySelector("[data-create-password-input]");
+    var passwordRow = document.querySelector("[data-create-password-row]");
+    if (!modeInput || !toggle || !input || !passwordRow) {
+      return;
+    }
+
+    function syncPasswordState() {
+      var enabled = !!toggle.checked;
+      modeInput.value = enabled ? "set" : "none";
+      passwordRow.classList.toggle("is-hidden", !enabled);
+      input.disabled = !enabled;
+      input.required = enabled;
+      if (!enabled) {
+        input.value = "";
+      }
+    }
+
+    toggle.addEventListener("change", syncPasswordState);
+    syncPasswordState();
+  })();
+</script>
+</body>
+</html>

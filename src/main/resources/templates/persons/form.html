@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + (personDto.id != null ? 'Editează persoană' : 'Adaugă persoană')}">Formular</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${personDto.id != null ? 'Editează persoană' : 'Adaugă persoană'}"></h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/visits}" class="header-action-icon" aria-label="Vizite" title="Vizite">
+        <span class="material-icons" aria-hidden="true">handshake</span>
+      </a>
+      <a th:href="@{/persons}" class="header-action-icon" aria-label="Înapoi" title="Înapoi">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <form th:object="${personDto}"
+        th:action="${personDto.id != null} ? @{/persons/{id}(id=${personDto.id})} : @{/persons}"
+        method="post" class="event-form">
+
+    <section class="form-grid">
+      <label>
+        <span>Prenume</span>
+        <input type="text" th:field="*{firstName}" th:value="${personDto.firstName}" required />
+      </label>
+      <label>
+        <span>Nume</span>
+        <input type="text" th:field="*{lastName}" th:value="${personDto.lastName}" required />
+      </label>
+      <label>
+        <span data-i18n="memberType.filterLabel">Tip</span>
+        <select th:field="*{memberType}">
+          <option th:each="t : ${memberTypes}" th:value="${t}" th:text="${@uiLabels.memberType(t)}"
+                  th:attr="data-i18n=${'memberType.' + t.name()}"></option>
+        </select>
+      </label>
+      <label>
+        <span>Data nașterii</span>
+        <input type="date"
+               id="birthDate"
+               name="birthDate"
+               th:value="${personDto.birthDate != null ? #temporals.format(personDto.birthDate, 'yyyy-MM-dd') : ''}" />
+      </label>
+      <label>
+        <span>Telefon</span>
+        <input type="text" th:field="*{phone}" th:value="${personDto.phone}" />
+      </label>
+      <label>
+        <span>Rol în biserică</span>
+        <input type="text" th:field="*{churchRole}" th:value="${personDto.churchRole}" />
+      </label>
+      <label>
+        <span>Adresă</span>
+        <input type="text" th:field="*{address}" th:value="${personDto.address}" />
+      </label>
+      <label>
+        <span>Poziție</span>
+        <input type="text" th:field="*{position}" th:value="${personDto.position}" />
+      </label>
+    </section>
+
+    <section class="form-grid">
+      <label>
+        <span>Soț/soție</span>
+        <select th:field="*{spouseId}">
+          <option value="">—</option>
+          <option th:each="p : ${allPersons}" th:value="${p.id}" th:text="${p.fullName}"></option>
+        </select>
+      </label>
+      <div class="field-label">
+        <span>Copii</span>
+        <div class="person-children-picker">
+          <label th:each="p : ${allPersons}" class="person-children-option">
+            <input type="checkbox"
+                   name="childrenIds"
+                   th:value="${p.id}"
+                   th:checked="${personDto.childrenIds != null and #lists.contains(personDto.childrenIds, p.id)}" />
+            <span th:text="${p.fullName}"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="submit" class="button primary" th:text="${personDto.id != null ? 'Actualizează' : 'Salvează'}"></button>
+      <a th:href="@{/persons}" class="link-button">Anulează</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>

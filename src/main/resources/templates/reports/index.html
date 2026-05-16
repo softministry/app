@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Rapoarte'}">Rapoarte</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <script defer th:src="@{/js/reports-layout.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" data-i18n="reports.analysis">Analiză</p>
+      <h1 data-i18n="reports.title">Rapoarte</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <form method="get"
+        th:action="@{/reports}"
+        class="toolbar"
+        data-partial-form
+        data-partial-endpoint="/reports/results"
+        data-partial-target="[data-reports-results]">
+    <label class="toolbar-item">
+      <span data-i18n="reports.from">De la</span>
+      <input type="date" name="from" th:value="${from}" data-partial-auto-submit />
+    </label>
+    <label class="toolbar-item">
+      <span data-i18n="reports.to">Până la</span>
+      <input type="date" name="to" th:value="${to}" data-partial-auto-submit />
+    </label>
+    <div class="toolbar-actions toolbar-icon-actions">
+      <button type="button" class="button ghost is-hidden" data-save-report-layout disabled>Salvează ordinea componentelor</button>
+      <span class="report-layout-save-status is-hidden" data-report-layout-save-status aria-live="polite"></span>
+      <a th:href="@{/reports}" class="icon-button" aria-label="Reset" data-i18n-aria-label="actions.reset">
+        <span class="material-icons" aria-hidden="true">restart_alt</span>
+      </a>
+    </div>
+  </form>
+
+  <section data-reports-results th:fragment="resultsSection">
+  <section class="card report-export-card">
+    <div>
+      <h2 data-i18n="reports.exportCsv">Export CSV</h2>
+      <p class="muted" data-i18n="reports.exportHint">Descarcă rapoartele pentru perioada selectată.</p>
+    </div>
+    <div class="report-export-actions">
+      <a class="button ghost" th:href="@{/reports/export(type='attendance',from=${from},to=${to})}" data-i18n="reports.attendance">Prezență</a>
+      <a class="button ghost" th:href="@{/reports/export(type='attendance-groups',from=${from},to=${to})}" data-i18n="reports.attendanceByGroups">Prezență pe grupuri</a>
+      <a class="button ghost" th:href="@{/reports/export(type='pastoral-attention',from=${from},to=${to})}" data-i18n="menu.followUps">Follow-up pastoral</a>
+      <a class="button ghost" th:href="@{/reports/export(type='small-groups',from=${from},to=${to})}" data-i18n="reports.smallGroupHealth">Sănătate grupuri mici</a>
+      <a class="button ghost" th:href="@{/reports/export(type='key-moments',from=${from},to=${to})}" data-i18n="reports.keyMoments">Aniversări și momente cheie</a>
+      <a class="button ghost" th:href="@{/reports/export(type='people',from=${from},to=${to})}" data-i18n="reports.people">Persoane</a>
+      <a class="button ghost" th:href="@{/reports/export(type='events',from=${from},to=${to})}" data-i18n="menu.events">Evenimente</a>
+      <a class="button ghost" th:href="@{/reports/export(type='finance',from=${from},to=${to})}" data-i18n="reports.finance">Financiar</a>
+    </div>
+  </section>
+
+  <section class="report-summary-grid">
+    <a href="#report-attendance" class="report-summary-card report-summary-link">
+      <span class="material-icons" aria-hidden="true">how_to_reg</span>
+      <p class="finance-summary-label" data-i18n="reports.attendance">Prezență</p>
+      <h2 th:text="${presentCount + ' / ' + attendanceRecords}">0 / 0</h2>
+      <p class="muted"
+         data-i18n-template="reports.attendanceRateInPeriod"
+         th:attr="data-i18n-param-rate=${attendanceRate}">0%</p>
+    </a>
+    <a href="#report-people" class="report-summary-card report-summary-link">
+      <span class="material-icons" aria-hidden="true">groups</span>
+      <p class="finance-summary-label" data-i18n="reports.people">Persoane</p>
+      <h2 th:text="${peopleCount}">0</h2>
+      <p class="muted"
+         data-i18n-template="reports.peopleMissingContactSummary"
+         th:attr="data-i18n-param-noPhone=${peopleWithoutPhone},data-i18n-param-noAddress=${peopleWithoutAddress}">—</p>
+    </a>
+    <a href="#report-events" class="report-summary-card report-summary-link">
+      <span class="material-icons" aria-hidden="true">event</span>
+      <p class="finance-summary-label" data-i18n="menu.events">Evenimente</p>
+      <h2 th:text="${eventsCount}">0</h2>
+      <p class="muted" data-i18n="reports.selectedPeriod">în perioada selectată</p>
+    </a>
+    <a href="#report-finance" class="report-summary-card report-summary-link">
+      <span class="material-icons" aria-hidden="true">account_balance_wallet</span>
+      <p class="finance-summary-label" data-i18n="reports.finance">Finanțe</p>
+      <h2 th:text="${@uiLabels.moneyLei(currentBalance)}">0,00 lei</h2>
+      <p class="muted"
+         data-i18n-template="reports.totalTransactions"
+         th:attr="data-i18n-param-count=${financeTransactionsCount}">0 tranzacții</p>
+    </a>
+  </section>
+
+  <div class="card-grid" data-reports-grid th:attr="data-report-order=${reportsLayoutOrder}">
+    <section id="report-attendance" class="card report-detail-card" data-report-key="attendance-period">
+      <h2 data-i18n="reports.attendanceByPeriod">Prezență pe perioadă</h2>
+      <dl class="kv">
+        <div><dt data-i18n="reports.present">Prezenți</dt><dd th:text="${presentCount}">0</dd></div>
+        <div><dt data-i18n="reports.absent">Absenți</dt><dd th:text="${absentCount}">0</dd></div>
+        <div><dt data-i18n="reports.totalRecords">Total înregistrări</dt><dd th:text="${attendanceRecords}">0</dd></div>
+      </dl>
+    </section>
+
+    <section class="card report-detail-card" data-report-key="attendance-groups">
+      <h2 data-i18n="reports.attendanceByGroups">Prezență pe grupuri</h2>
+      <table class="mini-report-table">
+        <tbody>
+        <tr th:each="row : ${attendanceByGroup}">
+          <td>
+            <strong th:text="${row.name()}">Grup</strong>
+            <span class="muted" th:text="${@uiLabels.groupType(row.type())}">Grup mic</span>
+          </td>
+          <td th:text="${row.present() + ' / ' + row.total()}">0 / 0</td>
+        </tr>
+        <tr th:if="${attendanceByGroup.empty}">
+          <td colspan="2" class="muted" data-i18n="reports.noGroupsForActiveChurch">Nu există grupuri pentru biserica activă.</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card report-detail-card" data-expandable-panel data-report-key="pastoral-follow-up">
+      <div class="report-section-header">
+        <h2 data-i18n="reports.pastoralFollowUp">Follow-up pastoral</h2>
+        <div class="report-section-header-action report-section-header-action-shift">
+          <button type="button"
+                  class="icon-button report-expand-icon-button"
+                  aria-label="Extinde"
+                  data-i18n-aria-label="reports.expandSection"
+                  data-expand-toggle>
+            <img th:src="@{/img/extend.svg}" src="/img/extend.svg" class="report-expand-svg report-expand-svg-open" alt="" aria-hidden="true" />
+            <img th:src="@{/img/close.svg}" src="/img/close.svg" class="report-expand-svg report-expand-svg-close" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div class="report-expand-content report-expand-content-10-lines" data-expand-content>
+        <p class="muted" data-i18n="reports.pastoralFollowUpHint">Persoane cu cel puțin două absențe sau fără prezență în perioada selectată.</p>
+        <table class="mini-report-table">
+          <tbody>
+          <tr th:each="row : ${pastoralAttention}">
+            <td>
+              <strong th:text="${row.name()}">Nume persoană</strong>
+              <span class="muted" th:text="${row.phone() != null and !#strings.isEmpty(row.phone()) ? row.phone() : 'Fără telefon'}">Fără telefon</span>
+              <span class="muted" th:text="${row.reason()}">Motiv</span>
+              <a th:if="${row.personId() != null}" th:href="@{/follow-ups/new(personId=${row.personId()})}" class="link" data-i18n="reports.createFollowUp">Creează follow-up</a>
+            </td>
+            <td data-i18n-template="reports.absencesCount"
+                th:attr="data-i18n-param-count=${row.absent()}">0 absențe</td>
+          </tr>
+          <tr th:if="${pastoralAttention.empty}">
+            <td colspan="2" class="muted" data-i18n="reports.noPastoralFollowUps">Nu există persoane marcate pentru follow-up în perioada selectată.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card report-detail-card" data-report-key="small-group-health">
+      <h2 data-i18n="reports.smallGroupHealth">Sănătate grupuri mici</h2>
+      <div class="age-template-layout" th:if="${!smallGroupChartBands.empty}">
+        <div class="age-template-chart-wrap">
+          <div class="age-pie-chart"
+               th:style="${smallGroupPieStyle}"
+               role="img"
+               aria-label="Distribuția membrilor pe grupuri mici"
+               data-i18n-aria-label="reports.smallGroupDistributionAria">
+            <span class="age-slice-label"
+                  th:each="label : ${smallGroupSliceLabels}"
+                  th:text="${label.percent() + '%'}"
+                  th:style="'left:' + ${#numbers.formatDecimal(label.x(),1,2)} + '%;top:' + ${#numbers.formatDecimal(label.y(),1,2)} + '%;'">0%</span>
+          </div>
+          <p class="age-template-footnote"
+             data-i18n-template="reports.totalCount"
+             th:attr="data-i18n-param-count=${smallGroupMembersTotal}">Total: 0</p>
+        </div>
+      </div>
+      <div class="age-template-legend" th:if="${!smallGroupChartBands.empty}">
+        <article class="age-band-card" th:each="band : ${smallGroupChartBands}"
+                 th:style="'--age-band-color:' + ${band.color()}">
+          <p class="age-band-legend-line">
+            <span class="age-band-dot" th:style="'background:' + ${band.color()}"></span>
+            <strong th:text="${band.label() == 'Fără grup'
+                ? band.label() + ': ' + band.value() + ' (' + band.percent() + '%)'
+                : band.label() + ': ' + band.value() + ' (' + band.attendanceRatePercent() + '% prezență)'}">Grup: 0</strong>
+          </p>
+        </article>
+      </div>
+      <table class="mini-report-table">
+        <tbody>
+        <tr th:each="row : ${smallGroupHealth}">
+          <td>
+            <strong th:text="${row.name()}">Nume grup</strong>
+            <span class="muted" th:text="${row.leaderName()}">Lider</span>
+            <span class="muted" data-i18n-template="reports.membersAndInactive"
+                  th:attr="data-i18n-param-members=${row.membersCount()},data-i18n-param-inactive=${row.inactiveMembers()}">0 membri · 0 inactivi</span>
+          </td>
+          <td th:text="${row.attendanceRatePercent() + '% (' + row.present() + '/' + row.total() + ')'}">0% (0/0)</td>
+        </tr>
+        <tr th:if="${smallGroupHealth.empty}">
+          <td colspan="2" class="muted" data-i18n="reports.noSmallGroups">Nu există grupuri mici configurate.</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="report-people" class="card report-detail-card" data-report-key="age-distribution">
+      <div class="age-template-header">
+        <h2 data-i18n="reports.ageDistribution">Distribuție pe vârstă</h2>
+        <p class="muted" data-i18n="reports.ageDistributionHint">Structură demografică pentru biserica activă</p>
+      </div>
+      <div class="age-template-layout">
+        <div class="age-template-chart-wrap">
+          <div class="age-pie-chart"
+               th:style="${peopleByAgePieStyle}"
+               role="img"
+               aria-label="Distribuția persoanelor pe categorii de vârstă"
+               data-i18n-aria-label="reports.ageDistributionAria">
+            <span class="age-slice-label"
+                  th:each="label : ${peopleByAgeSliceLabels}"
+                  th:text="${label.percent() + '%'}"
+                  th:style="'left:' + ${#numbers.formatDecimal(label.x(),1,2)} + '%;top:' + ${#numbers.formatDecimal(label.y(),1,2)} + '%;'">0%</span>
+          </div>
+          <p class="age-template-footnote"
+             data-i18n-template="reports.totalCount"
+             th:attr="data-i18n-param-count=${peopleCount}">Total: 0</p>
+        </div>
+      </div>
+      <div class="age-template-legend">
+        <article class="age-band-card" th:each="band : ${peopleByAgeBands}"
+                 th:style="'--age-band-color:' + ${band.color()}">
+          <p class="age-band-legend-line">
+            <span class="age-band-dot" th:style="'background:' + ${band.color()}"></span>
+            <strong th:text="${band.label() + ': ' + band.value()}">0-20 ani: 0</strong>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="card report-detail-card" data-report-key="people-categories">
+      <h2 data-i18n="reports.peopleByCategories">Persoane pe categorii</h2>
+      <table class="mini-report-table">
+        <tbody>
+        <tr th:each="row : ${peopleByType}">
+          <td th:text="${@uiLabels.memberType(row.label())}">Membru</td>
+          <td>
+            <a th:href="@{/persons(memberType=${row.label()})}" class="metric-sub-link" th:text="${row.value()}">0</a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card report-detail-card" data-expandable-panel data-report-key="key-moments">
+      <div class="report-section-header">
+        <h2 data-i18n="reports.keyMoments">Aniversări și momente cheie</h2>
+        <div class="report-expand-actions">
+          <button type="button"
+                 class="icon-button report-expand-icon-button"
+                 aria-label="Extinde"
+                 data-i18n-aria-label="reports.expandSection"
+                 data-expand-toggle>
+            <img th:src="@{/img/extend.svg}" src="/img/extend.svg" class="report-expand-svg report-expand-svg-open" alt="" aria-hidden="true" />
+            <img th:src="@{/img/close.svg}" src="/img/close.svg" class="report-expand-svg report-expand-svg-close" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div class="report-expand-content report-expand-content-10-lines" data-expand-content>
+        <p class="muted" data-i18n="reports.keyMomentsHint">Aniversări în următoarele 30 de zile și date personale lipsă.</p>
+        <table class="mini-report-table">
+          <tbody>
+          <tr th:each="row : ${upcomingBirthdays}">
+            <td>
+              <strong th:text="${row.name()}">Nume persoană</strong>
+              <span class="muted" th:text="${row.birthDate()}">01.01.1990</span>
+            </td>
+            <td th:text="${row.daysUntil() == 0 ? 'Astăzi · ' + row.turningAge() + ' ani' : 'În ' + row.daysUntil() + ' zile · ' + row.turningAge() + ' ani'}">În 3 zile · 30 ani</td>
+          </tr>
+          <tr th:if="${upcomingBirthdays.empty}">
+            <td colspan="2" class="muted" data-i18n="reports.noUpcomingBirthdays">Nu există aniversări în următoarele 30 de zile.</td>
+          </tr>
+          </tbody>
+        </table>
+        <h3 data-i18n="reports.missingBirthDates">Persoane fără dată de naștere</h3>
+        <table class="mini-report-table">
+          <tbody>
+          <tr th:each="row : ${missingBirthDatePeople}">
+            <td>
+              <strong th:text="${row.name()}">Nume persoană</strong>
+              <span class="muted" th:text="${row.phone() != null and !#strings.isEmpty(row.phone()) ? row.phone() : 'Fără telefon'}">Fără telefon</span>
+            </td>
+            <td>
+              <a th:if="${row.personId() != null}" th:href="@{/persons/{id}(id=${row.personId()})}" class="link" data-i18n="reports.openPerson">Deschide persoana</a>
+            </td>
+          </tr>
+          <tr th:if="${missingBirthDatePeople.empty}">
+            <td colspan="2" class="muted" data-i18n="reports.noMissingBirthDates">Toate persoanele au dată de naștere completată.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="report-events" class="card report-detail-card" data-report-key="events-status">
+      <h2 data-i18n="reports.eventsByStatus">Evenimente după status</h2>
+      <table class="mini-report-table">
+        <tbody>
+        <tr th:each="row : ${eventsByStatus}">
+          <td th:text="${@uiLabels.eventStatus(row.label())}">Planificat</td>
+          <td th:text="${row.value()}">0</td>
+        </tr>
+        <tr th:if="${eventsByStatus.empty}">
+          <td colspan="2" class="muted" data-i18n="reports.noEventsInPeriod">Nu există evenimente în perioada selectată.</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card report-detail-card" data-report-key="events-type">
+      <h2 data-i18n="reports.eventsByType">Evenimente după tip</h2>
+      <table class="mini-report-table">
+        <tbody>
+        <tr th:each="row : ${eventsByType}">
+          <td th:text="${@uiLabels.eventType(row.label())}">Serviciu divin</td>
+          <td th:text="${row.value()}">0</td>
+        </tr>
+        <tr th:if="${eventsByType.empty}">
+          <td colspan="2" class="muted" data-i18n="reports.noEventsInPeriod">Nu există evenimente în perioada selectată.</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="report-finance" class="card report-detail-card" data-report-key="finance">
+      <h2 data-i18n="reports.finance">Financiar</h2>
+      <dl class="kv">
+        <div><dt data-i18n="reports.income">Venituri</dt><dd th:text="${@uiLabels.moneyLei(totalIncome)}">0,00 lei</dd></div>
+        <div><dt data-i18n="reports.expenses">Cheltuieli</dt><dd th:text="${@uiLabels.moneyLei(totalExpenses)}">0,00 lei</dd></div>
+        <div><dt data-i18n="reports.balance">Sold</dt><dd th:text="${@uiLabels.moneyLei(currentBalance)}">0,00 lei</dd></div>
+      </dl>
+      <p class="muted" data-i18n="reports.financeUnfilteredHint">Finanțele curente nu sunt încă filtrate pe biserică sau perioadă.</p>
+    </section>
+  </div>
+  </section>
+</div>
+</body>
+</html>

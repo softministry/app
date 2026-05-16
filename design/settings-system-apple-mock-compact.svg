@@ -1,0 +1,50 @@
+<svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F8FB"/>
+      <stop offset="1" stop-color="#EEF1F6"/>
+    </linearGradient>
+    <filter id="cardShadow" x="0" y="0" width="2000" height="1300" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#0B1220" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="980" fill="url(#bg)"/>
+  <rect x="40" y="30" width="1520" height="62" rx="16" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="74" y="68" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="24" font-weight="650">Settings</text>
+
+  <rect x="40" y="106" width="280" height="844" rx="20" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="70" y="150" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="12" font-weight="600" letter-spacing="1">SECTIONS</text>
+  <rect x="64" y="168" width="232" height="40" rx="12" fill="#F8FAFC"/><text x="92" y="193" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Appearance</text>
+  <rect x="64" y="216" width="232" height="40" rx="12" fill="#F8FAFC"/><text x="92" y="241" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Church</text>
+  <rect x="64" y="264" width="232" height="40" rx="12" fill="#F8FAFC"/><text x="92" y="289" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Pastoral</text>
+  <rect x="64" y="312" width="232" height="40" rx="12" fill="#E8F0FF"/><text x="92" y="337" fill="#1D4ED8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="600">System</text>
+
+  <rect x="336" y="106" width="1224" height="844" rx="20" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="376" y="152" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="30" font-weight="700">System</text>
+  <text x="376" y="176" fill="#64748B" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Runtime and database controls for desktop deployments</text>
+
+  <rect x="376" y="194" width="1144" height="186" rx="14" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="402" y="228" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="20" font-weight="600">General</text>
+  <text x="402" y="262" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Default rows per page</text>
+  <rect x="402" y="272" width="300" height="40" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/><text x="420" y="297" fill="#0F172A" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">10</text>
+  <rect x="402" y="322" width="530" height="34" rx="9" fill="#FFFFFF" stroke="#D5DEE9"/><circle cx="422" cy="339" r="7" fill="#2563EB"/><text x="442" y="344" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Enable event tasks</text>
+  <rect x="946" y="322" width="530" height="34" rx="9" fill="#FFFFFF" stroke="#D5DEE9"/><circle cx="966" cy="339" r="7" fill="#CBD5E1"/><text x="986" y="344" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Private mode</text>
+
+  <rect x="376" y="394" width="1144" height="164" rx="14" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="402" y="428" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="20" font-weight="600">Database</text>
+  <rect x="402" y="442" width="138" height="34" rx="10" fill="#EEF2FF"/><text x="434" y="464" fill="#3730A3" font-family="SF Pro Text, -apple-system, sans-serif" font-size="13" font-weight="600">Export DB</text>
+  <rect x="550" y="442" width="138" height="34" rx="10" fill="#EEF2FF"/><text x="580" y="464" fill="#3730A3" font-family="SF Pro Text, -apple-system, sans-serif" font-size="13" font-weight="600">Export fresh</text>
+  <text x="402" y="500" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Import archive</text>
+  <rect x="402" y="508" width="820" height="38" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/><text x="420" y="532" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">No file selected</text>
+  <rect x="1234" y="508" width="128" height="38" rx="10" fill="#1D4ED8"/><text x="1278" y="532" fill="#FFFFFF" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14" font-weight="600">Import</text>
+
+  <rect x="376" y="572" width="1144" height="232" rx="14" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="402" y="606" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="20" font-weight="600">Desktop Runtime</text>
+  <text x="402" y="628" fill="#64748B" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Switch between production and testing database profiles</text>
+  <text x="402" y="662" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Database mode</text>
+  <rect x="402" y="670" width="340" height="40" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/><text x="420" y="695" fill="#0F172A" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">PROD (current)</text>
+  <rect x="402" y="720" width="690" height="34" rx="9" fill="#FFFFFF" stroke="#D5DEE9"/><circle cx="422" cy="737" r="7" fill="#2563EB"/><text x="442" y="742" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14">Clone current DB into dev dataset on first switch</text>
+  <rect x="402" y="764" width="266" height="36" rx="10" fill="#0F172A"/><text x="452" y="787" fill="#FFFFFF" font-family="SF Pro Text, -apple-system, sans-serif" font-size="13" font-weight="600">Apply DB mode (restart required)</text>
+  <rect x="1254" y="764" width="266" height="36" rx="10" fill="#FFF1F2" stroke="#FECACA"/><text x="1320" y="787" fill="#B91C1C" font-family="SF Pro Text, -apple-system, sans-serif" font-size="13" font-weight="600">Stop application</text>
+</svg>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Adaugă biserică'}">Adaugă biserică</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <script defer th:src="@{/js/church-form.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1>Adaugă biserică nouă</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/settings/church}" class="header-action-icon" aria-label="Setări biserică" title="Setări biserică">
+        <span class="material-icons" aria-hidden="true">tune</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form th:object="${churchForm}" th:action="@{/church/create}" method="post" class="event-form church-form" data-church-form th:attr="data-avatar-upload-url=@{/church/avatar-upload}">
+    <section class="form-grid">
+      <label>
+        <span>Nume biserică</span>
+        <input type="text" th:field="*{name}" required />
+      </label>
+      <label>
+        <span>Adresă</span>
+        <input type="text" th:field="*{address}" />
+      </label>
+    </section>
+
+    <section class="church-avatar-editor" th:if="${avatarEnabled}">
+      <div class="church-avatar-edit-grid">
+        <div class="church-avatar-preview-wrap" data-avatar-preview-wrap>
+          <img class="church-avatar-preview"
+               data-avatar-preview
+               th:classappend="${churchForm.avatarUrl != null and !#strings.isEmpty(churchForm.avatarUrl)} ? '' : ' is-hidden'"
+               th:src="${churchForm.avatarUrl}"
+               alt="Preview avatar" />
+          <span class="church-avatar-preview-placeholder"
+                data-avatar-placeholder
+                th:classappend="${churchForm.avatarUrl != null and !#strings.isEmpty(churchForm.avatarUrl)} ? ' is-hidden' : ''">B</span>
+          <button type="button" class="church-avatar-trigger" data-avatar-upload>
+            <span class="church-avatar-trigger-empty">↑ Adauga poza biserica</span>
+            <span class="church-avatar-trigger-hover">↑ Încarcă</span>
+          </button>
+        </div>
+        <div class="church-avatar-fields">
+          <label>
+            <span>Avatar URL</span>
+            <input type="text" th:field="*{avatarUrl}" data-avatar-url placeholder="https://... sau /uploads/church/..." />
+          </label>
+          <div class="church-avatar-actions">
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-avatar-file hidden />
+            <button type="button" class="link-button" data-avatar-clear>Șterge poză</button>
+          </div>
+          <p class="muted church-avatar-error" data-avatar-error></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-grid">
+      <label>
+        <span>Pastor</span>
+        <input type="text" th:field="*{pastorName}" />
+      </label>
+      <label>
+        <span>Telefon pastor</span>
+        <input type="text" th:field="*{pastorPhone}" />
+      </label>
+      <label>
+        <span>Secretar</span>
+        <input type="text" th:field="*{secretaryName}" />
+      </label>
+      <label>
+        <span>Telefon secretar</span>
+        <input type="text" th:field="*{secretaryPhone}" />
+      </label>
+      <label>
+        <span>Trezorier</span>
+        <input type="text" th:field="*{treasurerName}" />
+      </label>
+      <label>
+        <span>Telefon trezorier</span>
+        <input type="text" th:field="*{treasurerPhone}" />
+      </label>
+    </section>
+
+    <div class="form-actions">
+      <button type="submit" class="button primary">Adaugă</button>
+      <a th:href="@{/settings/church}" class="link-button">Anulează</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>

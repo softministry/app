@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Grupuri'}">Grupuri</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <script defer th:src="@{/js/groups-form.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" data-i18n="groups.organization">Organizare</p>
+      <h1 data-i18n="groups.title">Grupuri / echipe / slujiri</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button type="button" class="button primary header-action-icon" aria-label="Adaugă grup" title="Adaugă grup" data-i18n-aria-label="groups.add" data-i18n-title="groups.add" data-group-create>
+        <span class="material-icons" aria-hidden="true">add</span>
+      </button>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form method="get"
+        th:action="@{/groups}"
+        class="toolbar"
+        data-partial-form
+        data-partial-endpoint="/groups/results"
+        data-partial-target="[data-groups-results]">
+    <label class="toolbar-item">
+      <span data-i18n="search.label">Caută</span>
+      <input type="text" name="q" th:value="${q}" placeholder="Nume sau descriere..." data-i18n-placeholder="search.groupPlaceholder" />
+    </label>
+    <label class="toolbar-item">
+      <span data-i18n="groups.type">Tip grup</span>
+      <select name="type" data-partial-auto-submit>
+        <option value="" data-i18n="memberType.ALL">Toate</option>
+        <option th:each="item : ${groupTypes}" th:value="${item}" th:text="${@uiLabels.groupType(item)}" th:selected="${type != null and type == item}"></option>
+      </select>
+    </label>
+    <div class="toolbar-actions toolbar-icon-actions">
+      <a th:href="@{/groups}" class="icon-button" aria-label="Resetează filtre" data-i18n-aria-label="actions.resetFilters">
+        <span class="material-icons" aria-hidden="true">restart_alt</span>
+      </a>
+    </div>
+  </form>
+
+  <section data-groups-results th:fragment="resultsSection">
+  <div class="table-scroll">
+    <table class="stripe groups-table">
+      <colgroup>
+        <col class="col-number" />
+        <col class="col-group" />
+        <col class="col-type" />
+        <col class="col-leader" />
+        <col class="col-members" />
+        <col class="col-actions" />
+      </colgroup>
+      <thead>
+      <tr>
+        <th>#</th>
+        <th data-i18n="groups.name">Grup</th>
+        <th data-i18n="groups.type">Tip</th>
+        <th data-i18n="groups.leader">Lider</th>
+        <th data-i18n="groups.members">Membri</th>
+        <th class="actions" data-i18n="actions_label">Acțiuni</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="group, stat : ${groups}">
+        <td th:text="${stat.count + '.'}">1.</td>
+        <td>
+          <a th:href="@{'/groups/' + ${group.id}}" class="link" th:text="${group.name}">Grup</a>
+          <p class="muted" th:text="${group.description != null and !#strings.isEmpty(group.description) ? group.description : '—'}">—</p>
+        </td>
+        <td th:text="${@uiLabels.groupType(group.type)}">Echipă</td>
+        <td th:text="${group.leader != null ? (#strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) != '' ? #strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) : 'Persoană fără nume') : '—'}">—</td>
+        <td th:text="${group.members != null ? group.members.size() : 0}">0</td>
+        <td class="actions">
+          <button type="button"
+                  class="icon-button"
+                  aria-label="Editează"
+                  data-i18n-aria-label="actions.edit"
+                  th:with="editData=${groupEditDataById[group.id]}"
+                  th:attr="data-group-id=${editData.id()},
+                           data-group-name=${editData.name()},
+                           data-group-type=${editData.type()},
+                           data-group-leader-id=${editData.leaderId() == null ? '' : editData.leaderId()},
+                           data-group-description=${editData.description()},
+                           data-group-member-ids=${editData.memberIdsCsv()}"
+                  data-group-edit>
+            <span class="material-icons" aria-hidden="true">edit</span>
+          </button>
+          <form th:action="@{'/groups/' + ${group.id} + '/delete'}" method="post" class="inline-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="icon-button icon-button-danger" aria-label="Șterge" data-i18n-aria-label="actions.delete">
+              <span class="material-icons" aria-hidden="true">delete</span>
+            </button>
+          </form>
+        </td>
+      </tr>
+      <tr th:if="${groups.empty}">
+        <td colspan="6" class="muted" data-i18n="groups.empty">Nu există grupuri pentru moment.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  </section>
+
+  <div class="group-form-modal" data-group-form-modal hidden>
+    <div class="group-form-backdrop" data-group-form-close></div>
+    <section class="group-form-panel" role="dialog" aria-modal="true" aria-labelledby="group-form-title">
+      <div class="group-form-panel-header">
+        <div>
+          <p class="eyebrow" data-i18n="groups.organization">Organizare</p>
+          <h2 id="group-form-title" data-group-form-title data-i18n="groups.add">Adaugă grup</h2>
+        </div>
+        <button type="button" class="icon-button" aria-label="Închide" data-i18n-aria-label="actions.close" data-group-form-close>
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form action="/groups" method="post" class="event-form group-inline-form" data-group-form>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="id" data-group-id-field />
+        <section class="group-form-layout">
+          <div class="group-form-fields">
+            <label>
+              <span data-i18n="groups.name">Nume grup</span>
+              <input type="text" name="name" required data-group-name-field />
+            </label>
+            <label>
+              <span data-i18n="groups.type">Tip grup</span>
+              <select name="type" data-group-type-field>
+                <option th:each="item : ${groupTypes}" th:value="${item}" th:text="${@uiLabels.groupType(item)}"></option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="groups.leader">Lider</span>
+              <select name="leaderId" data-group-leader-field>
+                <option value="" data-i18n="common.none">—</option>
+                <option th:each="person : ${allPersons}"
+                        th:value="${person.id}"
+                        th:text="${person.fullName != null and !#strings.isEmpty(#strings.trim(person.fullName)) ? #strings.trim(person.fullName) : 'Persoană fără nume'}"></option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="groups.description">Descriere</span>
+              <textarea name="description" rows="6" placeholder="Scop, ritm întâlniri, observații..." data-i18n-placeholder="groups.descriptionPlaceholder" data-group-description-field></textarea>
+            </label>
+          </div>
+          <div class="group-member-picker">
+            <div class="group-member-picker-header">
+              <span class="field-label" data-i18n="groups.members">Membri</span>
+              <span class="group-member-count" data-member-count data-i18n-template="groups.selectedCount" data-i18n-param-count="0">0 selectați</span>
+            </div>
+            <div class="group-member-selected is-empty" data-member-selected>
+              <span class="muted" data-i18n="groups.noMemberSelected">Niciun membru selectat.</span>
+            </div>
+            <input type="text"
+                   class="group-member-search"
+                   placeholder="Caută membru..."
+                   data-i18n-placeholder="groups.searchMemberPlaceholder"
+                   autocomplete="off"
+                   data-member-search />
+            <div class="group-member-toolbar">
+              <button type="button" class="member-picker-action" data-member-select-visible data-i18n="groups.selectResults">Selectează rezultatele</button>
+              <button type="button" class="member-picker-action" data-member-clear data-i18n="groups.clearSelection">Curăță selecția</button>
+            </div>
+            <div class="checkbox-list group-form-member-list" data-member-list>
+              <label th:each="person : ${allPersons}"
+                     class="checkbox-inline checkbox-list-item"
+                     th:attr="data-member-name=${person.fullName != null and !#strings.isEmpty(#strings.trim(person.fullName)) ? #strings.trim(person.fullName) : 'Persoană fără nume'},
+                              data-member-id=${person.id}">
+                <input type="checkbox"
+                       name="memberIds"
+                       th:value="${person.id}" />
+                <span th:text="${person.fullName != null and !#strings.isEmpty(#strings.trim(person.fullName)) ? #strings.trim(person.fullName) : 'Persoană fără nume'}">Persoană</span>
+              </label>
+              <p class="muted checkbox-list-empty is-hidden" data-member-empty data-i18n="groups.noMemberSearchResults">Nu am găsit membri pentru căutarea curentă.</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="form-actions">
+          <button type="submit" class="button primary" data-i18n="actions.save" data-group-submit>Salvează</button>
+          <button type="button" class="link-button" data-i18n="actions.cancel" data-group-form-close>Anulează</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+</body>
+</html>

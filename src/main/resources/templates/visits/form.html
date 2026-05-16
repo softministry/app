@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + (visitDto.id != null ? 'Editează vizită' : 'Vizită nouă')}">Vizită</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${visitDto.id != null ? 'Editează vizită' : 'Vizită nouă'}">Vizită</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/visits}" class="header-action-icon" aria-label="Înapoi" title="Înapoi">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <form class="form"
+        th:object="${visitDto}"
+        th:action="${visitDto.id != null} ? @{'/visits/' + ${visitDto.id}} : @{/visits}"
+        method="post">
+
+    <label>
+      <span>Persoană</span>
+      <input type="text" th:field="*{personName}" />
+    </label>
+
+    <label>
+      <span>Telefon</span>
+      <input type="text" th:field="*{phone}" />
+    </label>
+
+    <label class="full">
+      <span>Adresă</span>
+      <input type="text" th:field="*{address}" />
+    </label>
+
+    <label>
+      <span>Data vizitei</span>
+      <input type="date" th:field="*{visitDate}" />
+    </label>
+
+    <label class="full">
+      <span>Notițe</span>
+      <textarea th:field="*{notes}"></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="button primary">Salvează</button>
+      <a th:href="@{/visits}" class="link">Renunță</a>
+      <span class="pill" th:if="${visitDto.id != null}" th:text="'ID: ' + ${visitDto.id}"></span>
+    </div>
+  </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + (followUpForm.id != null ? 'Editează follow-up' : 'Follow-up nou')}">Follow-up pastoral</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" data-i18n="settings.pastoral">Pastoral</p>
+      <h1 th:text="${followUpForm.id != null ? 'Editează follow-up' : 'Follow-up nou'}"
+          th:attr="data-i18n=${followUpForm.id != null ? 'followups.editTitle' : 'followups.newTitle'}">Follow-up nou</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/follow-ups}" class="header-action-icon" aria-label="Înapoi" title="Înapoi" data-i18n-aria-label="actions.back" data-i18n-title="actions.back">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form class="form"
+        th:object="${followUpForm}"
+        th:action="${followUpForm.id != null} ? @{'/follow-ups/' + ${followUpForm.id}} : @{/follow-ups}"
+        method="post">
+    <input type="hidden" th:field="*{redirect}" />
+
+    <label>
+      <span data-i18n="persons.title">Persoană</span>
+      <select th:field="*{personId}" required>
+        <option value="" data-i18n="followups.selectPerson">Selectează persoana</option>
+        <option th:each="person : ${persons}"
+                th:value="${person.id}"
+                th:text="${((person.firstName != null ? person.firstName : '') + ' ' + (person.lastName != null ? person.lastName : '')).trim() + (person.phone != null and !#strings.isEmpty(person.phone) ? ' · ' + person.phone : '')}"></option>
+      </select>
+    </label>
+
+    <label>
+      <span data-i18n="followups.groupMinistry">Grup / slujire</span>
+      <select th:field="*{groupId}">
+        <option value="" data-i18n="followups.noGroup">Fără grup</option>
+        <option th:each="group : ${groups}"
+                th:value="${group.id}"
+                th:text="${group.name + ' · ' + @uiLabels.groupType(group.type)}"></option>
+      </select>
+    </label>
+
+    <label>
+      <span data-i18n="events.status">Status</span>
+      <select th:field="*{status}" required>
+        <option th:each="status : ${statuses}"
+                th:value="${status.name()}"
+                th:text="${@uiLabels.followUpStatus(status)}"></option>
+      </select>
+    </label>
+
+    <label>
+      <span data-i18n="followups.contactMethod">Metodă contact</span>
+      <input type="text" th:field="*{contactMethod}" placeholder="Telefon, vizită, mesaj..." data-i18n-placeholder="followups.contactMethodPlaceholder" />
+    </label>
+
+    <label>
+      <span data-i18n="followups.lastContact">Ultimul contact</span>
+      <input type="date" th:field="*{lastContactDate}" />
+    </label>
+
+    <label>
+      <span data-i18n="followups.nextContact">Următor contact</span>
+      <input type="date" th:field="*{nextContactDate}" />
+    </label>
+
+    <label class="full">
+      <span data-i18n="followups.notes">Notițe</span>
+      <textarea th:field="*{notes}" placeholder="Context pastoral, pași următori, observații..." data-i18n-placeholder="followups.notesPlaceholder"></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="button primary" data-i18n="actions.save">Salvează</button>
+      <a th:href="@{/follow-ups}" class="link" data-i18n="actions.cancel">Renunță</a>
+      <span class="pill" th:if="${followUpForm.id != null}" data-i18n-template="followups.idLabel" th:attr="data-i18n-param-id=${followUpForm.id}"></span>
+    </div>
+  </form>
+</div>
+</body>
+</html>

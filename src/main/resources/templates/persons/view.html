@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + person.fullName}">Persoană</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${person.fullName}">Persoană</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/persons}" class="header-action-icon" aria-label="Înapoi" title="Înapoi">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <a th:if="${person.id != null}" th:href="@{'/families/' + ${familyKey}}" class="header-action-icon" aria-label="Familie" title="Familie">
+        <span class="material-icons" aria-hidden="true">family_restroom</span>
+      </a>
+      <a th:href="@{/visits}" class="header-action-icon" aria-label="Vizite" title="Vizite">
+        <span class="material-icons" aria-hidden="true">handshake</span>
+      </a>
+      <a th:href="@{/follow-ups/new(personId=${person.id})}" class="header-action-icon" aria-label="Follow-up" title="Follow-up">
+        <span class="material-icons" aria-hidden="true">support_agent</span>
+      </a>
+      <a th:href="@{'/persons/' + ${person.id} + '/edit'}" class="button primary header-action-icon" aria-label="Editează" title="Editează">
+        <span class="material-icons" aria-hidden="true">edit</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <div class="card-grid">
+    <section class="card">
+      <h2>Detalii</h2>
+      <dl class="kv">
+        <div>
+          <dt>Prenume</dt>
+          <dd th:text="${person.firstName != null and !#strings.isEmpty(person.firstName) ? person.firstName : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Nume</dt>
+          <dd th:text="${person.lastName != null and !#strings.isEmpty(person.lastName) ? person.lastName : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Tip</dt>
+          <dd>
+            <span th:if="${person.memberType != null}"
+                  th:text="${@uiLabels.memberType(person.memberType)}"
+                  th:attr="data-i18n=${'memberType.' + person.memberType.name()}"></span>
+            <span th:if="${person.memberType == null}">—</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Rol</dt>
+          <dd th:text="${person.churchRole != null and !#strings.isEmpty(person.churchRole) ? person.churchRole : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Telefon</dt>
+          <dd th:text="${person.phone != null and !#strings.isEmpty(person.phone) ? person.phone : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Data nașterii</dt>
+          <dd th:text="${person.birthDate != null ? person.birthDate : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Vârstă</dt>
+          <dd th:if="${personAgeYears != null}"
+              data-i18n-template="persons.ageYears"
+              th:attr="data-i18n-param-years=${personAgeYears}">0 ani</dd>
+          <dd th:if="${personAgeYears == null}">—</dd>
+        </div>
+        <div>
+          <dt>Adresă</dt>
+          <dd th:text="${person.address != null and !#strings.isEmpty(person.address) ? person.address : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Poziție</dt>
+          <dd th:text="${person.position != null and !#strings.isEmpty(person.position) ? person.position : '—'}"></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Familie</h2>
+      <dl class="kv">
+        <div>
+          <dt>Soț/soție</dt>
+          <dd th:text="${spouseName != null and !#strings.isEmpty(spouseName) ? spouseName : '—'}"></dd>
+        </div>
+        <div>
+          <dt>Familie</dt>
+          <dd>
+            <a th:href="@{'/families/' + ${familyKey}}" class="link" th:text="${familyKey}">familie</a>
+          </dd>
+        </div>
+      </dl>
+
+      <h3 class="subhead">Copii</h3>
+      <ul class="list">
+        <li th:each="c : ${children}">
+          <a th:href="@{'/persons/' + ${c.id}}" class="link" th:text="${c.fullName}">Copil</a>
+        </li>
+        <li th:if="${children.empty}" class="muted">—</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Grupuri / slujiri</h2>
+      <ul class="list">
+        <li th:each="group : ${groups}">
+          <a th:href="@{'/groups/' + ${group.id}}" class="link" th:text="${group.name}">Grup</a>
+          <span class="muted"
+                data-i18n-template="persons.groupTypeInline"
+                th:attr="data-i18n-param-type=${@uiLabels.groupType(group.type)}"> · Echipă</span>
+        </li>
+        <li th:if="${groups.empty}" class="muted">Persoana nu este alocată în niciun grup.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Follow-up pastoral</h2>
+          <p class="muted">Acțiuni pastorale legate de această persoană.</p>
+        </div>
+        <div class="inline-actions">
+          <a th:href="@{/follow-ups/export(personId=${person.id})}" class="link">Export CSV</a>
+          <a th:href="@{/follow-ups/new(personId=${person.id})}" class="link">Adaugă</a>
+        </div>
+      </div>
+      <table class="mini-report-table" th:if="${followUps != null and !followUps.empty}">
+        <tbody>
+        <tr th:each="item : ${followUps}">
+          <td>
+            <strong th:text="${@uiLabels.followUpStatus(item.status)}">Status</strong>
+            <span class="muted" th:if="${item.nextContactDate != null}"
+                  data-i18n-template="persons.nextContactDate"
+                  th:attr="data-i18n-param-date=${item.nextContactDate}">Următor contact</span>
+            <span class="muted" th:if="${item.nextContactDate == null}" data-i18n="persons.noNextContact">Fără următor contact</span>
+            <span class="muted" th:text="${item.notes != null and !#strings.isEmpty(item.notes) ? item.notes : 'Fără notițe'}">Notițe</span>
+          </td>
+          <td class="actions">
+            <a th:href="@{'/follow-ups/' + ${item.id} + '/edit'}" class="link">Editează</a>
+            <form th:if="${item.status.name() == 'OPEN'}"
+                  th:action="@{'/follow-ups/' + ${item.id} + '/status'}"
+                  method="post"
+                  class="inline-form">
+              <input type="hidden" name="status" value="IN_PROGRESS" />
+              <input type="hidden" name="redirect" th:value="@{'/persons/' + ${person.id}}" />
+              <button type="submit" class="link">În lucru</button>
+            </form>
+            <form th:if="${item.status.name() != 'DONE'}"
+                  th:action="@{'/follow-ups/' + ${item.id} + '/status'}"
+                  method="post"
+                  class="inline-form">
+              <input type="hidden" name="status" value="DONE" />
+              <input type="hidden" name="redirect" th:value="@{'/persons/' + ${person.id}}" />
+              <button type="submit" class="link">Finalizează</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="muted" th:if="${followUps == null or followUps.empty}">Nu există follow-up-uri pastorale pentru această persoană.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Notițe pastorale private</h2>
+          <p class="muted">Vizibile doar pentru rolurile selectate.</p>
+        </div>
+      </div>
+
+      <table class="mini-report-table" th:if="${privateNotes != null and !privateNotes.empty}">
+        <tbody>
+        <tr th:each="note : ${privateNotes}">
+          <td>
+            <strong th:text="${note.updatedAtLabel()}">01.01.2026 10:00</strong>
+            <span class="muted" th:text="${note.text()}">Conținut notiță</span>
+            <span class="muted"
+                  data-i18n-template="persons.privateNoteAuthor"
+                  th:attr="data-i18n-param-author=${note.createdBy()}">Autor</span>
+            <span class="muted"
+                  data-i18n-template="persons.privateNoteVisibility"
+                  th:attr="data-i18n-param-visibility=${note.visibility()}">Permisiuni</span>
+          </td>
+          <td class="actions">
+            <form th:if="${note.canDelete()}"
+                  th:action="@{'/persons/' + ${person.id} + '/private-notes/' + ${note.id()} + '/delete'}"
+                  method="post"
+                  class="inline-form">
+              <button type="submit" class="link">Șterge</button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="muted" th:if="${privateNotes == null or privateNotes.empty}">Nu există notițe private vizibile pentru această persoană.</p>
+
+      <form th:if="${canManagePrivateNotes}"
+            th:action="@{'/persons/' + ${person.id} + '/private-notes'}"
+            method="post"
+            th:object="${privateNoteForm}"
+            class="event-form">
+        <label>
+          <span>Notiță</span>
+          <textarea th:field="*{text}" rows="3" placeholder="Observație pastorală sensibilă..."></textarea>
+        </label>
+        <div>
+          <span class="field-label">Permisiuni roluri</span>
+          <div class="checkbox-list">
+            <label class="checkbox-inline"
+                   th:each="role : ${privateNoteRoleOptions}">
+              <input type="checkbox"
+                     th:field="*{allowedRoles}"
+                     th:value="${role.key()}" />
+              <span th:text="${role.label()}">Pastor</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="button primary">Adaugă notiță privată</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card card-wide">
+      <div class="section-heading">
+        <div>
+          <h2>Istoric pastoral</h2>
+          <p class="muted">Timeline din prezențe, vizite identificate și follow-up-uri pentru această persoană.</p>
+        </div>
+      </div>
+      <table class="mini-report-table timeline-table" th:if="${pastoralTimeline != null and !pastoralTimeline.empty}">
+        <tbody>
+        <tr th:each="item : ${pastoralTimeline}">
+          <td>
+            <strong th:text="${item.type()}">Tip</strong>
+            <span class="muted" th:text="${item.detail()}">Detalii</span>
+          </td>
+          <td>
+            <a th:href="${item.href()}" class="link" th:text="${item.date()}">2026-01-01</a>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p class="muted" th:if="${pastoralTimeline == null or pastoralTimeline.empty}">Nu există încă date suficiente pentru istoric pastoral.</p>
+    </section>
+  </div>
+</div>
+</body>
+</html>

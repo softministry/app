@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="headAssets">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
+  <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
+  <meta th:if="${_csrf != null}" name="_csrf_parameter" th:content="${_csrf.parameterName}" />
+  <script>
+    (function () {
+      document.documentElement.setAttribute("data-theme", "light");
+    })();
+  </script>
+  <link rel="stylesheet" th:href="@{/css/app.css}" />
+  <link rel="icon"
+        id="app-favicon"
+        th:href="${headerActiveChurch != null and headerActiveChurch.avatarUrl != null and !#strings.isEmpty(headerActiveChurch.avatarUrl)} ? ${headerActiveChurch.avatarUrl} : @{/img/church-tab.svg}"
+        th:attr="data-default-href=@{/img/church-tab.svg}" />
+  <script>
+    (function () {
+      var icon = document.getElementById("app-favicon");
+      if (!icon) return;
+      var fallback = icon.getAttribute("data-default-href") || "/img/church-tab.svg";
+      icon.addEventListener("error", function () {
+        if (icon.getAttribute("href") !== fallback) {
+          icon.setAttribute("href", fallback);
+        }
+      });
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <script defer th:src="@{/js/header-nav.js}"></script>
+  <script defer th:src="@{/js/header-notifications.js}"></script>
+  <script defer th:src="@{/js/partial-table-refresh.js}"></script>
+  <script defer th:src="@{/js/table-prefs.js}"></script>
+  <script defer th:src="@{/js/expandable-panel.js}"></script>
+  <script defer th:src="@{/js/i18n.js}"></script>
+</th:block>
+
+<nav th:fragment="mainNav" class="header-nav" aria-label="Navigare principală" data-i18n-aria-label="menu.mainNavigation">
+  <a th:href="@{/dashboard}" class="nav-icon-link" aria-label="Dashboard" title="Dashboard" data-i18n-aria-label="menu.dashboard" data-i18n-title="menu.dashboard"><span class="material-icons" aria-hidden="true">home</span></a>
+  <a th:href="@{/calendar}" class="nav-icon-link" aria-label="Calendar" title="Calendar" data-i18n-aria-label="menu.calendar" data-i18n-title="menu.calendar"><span class="material-icons" aria-hidden="true">calendar_month</span></a>
+
+  <details class="nav-group-menu" data-nav-group>
+    <summary class="nav-icon-link nav-group-trigger" aria-label="Management" title="Management"
+             data-i18n-aria-label="menu.management" data-i18n-title="menu.management">
+      <span class="material-icons" aria-hidden="true">view_kanban</span>
+    </summary>
+    <div class="nav-group-options">
+      <a th:href="@{/events}" class="nav-group-link"><span class="material-icons" aria-hidden="true">event</span><span data-i18n="menu.events">Evenimente</span></a>
+      <a th:href="@{/persons}" class="nav-group-link"><span class="material-icons" aria-hidden="true">groups</span><span data-i18n="menu.persons">Persoane</span></a>
+      <a th:href="@{/groups}" class="nav-group-link"><span class="material-icons" aria-hidden="true">diversity_3</span><span data-i18n="menu.groups">Grupuri</span></a>
+      <a th:href="@{/attendance}" class="nav-group-link"><span class="material-icons" aria-hidden="true">how_to_reg</span><span data-i18n="menu.attendance">Prezență</span></a>
+      <a th:href="@{/reports}" class="nav-group-link"><span class="material-icons" aria-hidden="true">assessment</span><span data-i18n="menu.reports">Rapoarte</span></a>
+      <a th:href="@{/finance}" class="nav-group-link"><span class="material-icons" aria-hidden="true">account_balance_wallet</span><span data-i18n="menu.finance">Finanțe</span></a>
+    </div>
+  </details>
+
+  <details class="nav-group-menu" data-nav-group>
+    <summary class="nav-icon-link nav-group-trigger" aria-label="Pastoral" title="Pastoral"
+             data-i18n-aria-label="menu.pastoralSection" data-i18n-title="menu.pastoralSection">
+      <span class="material-icons" aria-hidden="true">volunteer_activism</span>
+    </summary>
+    <div class="nav-group-options">
+      <a th:href="@{/visits}" class="nav-group-link"><span class="material-icons" aria-hidden="true">handshake</span><span data-i18n="menu.visits">Vizite</span></a>
+      <a th:href="@{/follow-ups}" class="nav-group-link"><span class="material-icons" aria-hidden="true">support_agent</span><span data-i18n="menu.followUps">Follow-up pastoral</span></a>
+    </div>
+  </details>
+
+
+  <div class="header-toast-stack"
+       th:if="${(headerBirthdayNotifications != null and !#lists.isEmpty(headerBirthdayNotifications)) or headerPasswordReminderVisible}"
+       aria-live="polite"
+       aria-label="Notificări"
+       data-i18n-aria-label="notifications.label">
+    <article th:each="notification : ${headerBirthdayNotifications}"
+             class="header-toast birthday-toast"
+             data-header-toast
+             data-toast-duration-ms="5000">
+      <a th:href="@{'/persons/' + ${notification.personId}}"
+         class="header-toast-main-link">
+        <span class="material-icons header-toast-icon" aria-hidden="true">cake</span>
+        <span class="header-toast-content">
+          <span class="header-toast-title" data-i18n="notifications.birthdayTitle">Zi de naștere</span>
+          <span class="header-toast-text"
+                data-i18n-template="notifications.birthdayPersonLine"
+                th:attr="data-i18n-param-name=${notification.personName},data-i18n-param-date=${notification.birthDateLabel},data-i18n-param-agePart=${notification.ageYears != null ? ' · ' + notification.ageYears : ''}">Nume persoană · 24 aprilie · 37</span>
+        </span>
+      </a>
+      <div class="header-toast-actions">
+        <form th:action="@{/notifications/birthdays/action}" method="post" class="header-toast-action-form">
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <input type="hidden" name="personId" th:value="${notification.personId}" />
+          <input type="hidden" name="mode" value="snooze" />
+          <input type="hidden" name="redirect" th:value="${headerCurrentPath}" />
+          <button type="submit"
+                  class="header-toast-action-btn"
+                  aria-label="Amână notificarea"
+                  title="Amână notificarea"
+                  data-i18n-aria-label="notifications.snooze"
+                  data-i18n-title="notifications.snooze">
+            <span class="material-icons" aria-hidden="true">schedule</span>
+          </button>
+        </form>
+        <form th:action="@{/notifications/birthdays/action}" method="post" class="header-toast-action-form">
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <input type="hidden" name="personId" th:value="${notification.personId}" />
+          <input type="hidden" name="mode" value="done" />
+          <input type="hidden" name="redirect" th:value="${headerCurrentPath}" />
+          <button type="submit"
+                  class="header-toast-action-btn done"
+                  aria-label="Marchează ca rezolvat"
+                  title="Marchează ca rezolvat"
+                  data-i18n-aria-label="notifications.markDone"
+                  data-i18n-title="notifications.markDone">
+            <span class="material-icons" aria-hidden="true">done</span>
+          </button>
+        </form>
+      </div>
+    </article>
+    <article th:if="${headerPasswordReminderVisible}"
+             class="header-toast password-reminder-toast"
+             data-header-toast>
+      <a th:href="@{/account/password}"
+         class="header-toast-main-link">
+        <span class="material-icons header-toast-icon" aria-hidden="true">info</span>
+        <span class="header-toast-content">
+          <span class="header-toast-title" data-i18n="notifications.passwordReminderTitle">Security</span>
+          <span class="header-toast-text"
+                data-i18n="notifications.passwordReminderText">For security, set a password for the admin account.</span>
+        </span>
+      </a>
+      <div class="header-toast-actions">
+        <a th:href="@{/account/password}"
+           class="header-toast-action-btn link-like"
+           aria-label="Change password"
+           title="Change password"
+           data-i18n-aria-label="notifications.passwordReminderAction"
+           data-i18n-title="notifications.passwordReminderAction">
+          <span class="material-icons" aria-hidden="true">password</span>
+        </a>
+        <form th:action="@{/notifications/password-reminder/dismiss}" method="post" class="header-toast-action-form">
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <input type="hidden" name="redirect" th:value="${headerCurrentPath}" />
+          <button type="submit"
+                  class="header-toast-action-btn done"
+                  aria-label="Don't remind again"
+                  title="Don't remind again"
+                  data-i18n-aria-label="notifications.passwordReminderDismiss"
+                  data-i18n-title="notifications.passwordReminderDismiss">
+            <span class="material-icons" aria-hidden="true">close</span>
+          </button>
+        </form>
+      </div>
+    </article>
+  </div>
+</nav>
+
+<details th:fragment="adminMenu" class="nav-group-menu nav-group-admin" data-nav-group>
+  <summary class="nav-icon-link nav-group-trigger" aria-label="Administrare" title="Administrare"
+           data-i18n-aria-label="menu.admin" data-i18n-title="menu.admin">
+    <span class="material-icons" aria-hidden="true">person</span>
+  </summary>
+  <div class="nav-group-options nav-group-options-admin">
+    <a th:href="@{/settings}" class="nav-group-link"><span class="material-icons" aria-hidden="true">tune</span><span data-i18n="menu.userSettings">Setări utilizator</span></a>
+    <a th:href="@{/settings/church}" class="nav-group-link"><span class="material-icons" aria-hidden="true">location_city</span><span data-i18n="menu.editChurch">Editare Biserică</span></a>
+    <a th:href="@{/settings/database}" class="nav-group-link"><span class="material-icons" aria-hidden="true">storage</span><span data-i18n="menu.databaseTools">Import/Export bază de date</span></a>
+    <a th:href="@{/account/password}" class="nav-group-link"><span class="material-icons" aria-hidden="true">password</span><span data-i18n="menu.changePassword">Schimbă parola</span></a>
+    <a th:if="${headerCanManageUsers}" th:href="@{/admin/users}" class="nav-group-link"><span class="material-icons" aria-hidden="true">manage_accounts</span><span data-i18n="menu.usersAdmin">Gestiune users</span></a>
+    <div class="nav-group-link nav-group-language">
+      <span class="material-icons nav-group-language-icon" aria-hidden="true">language</span>
+      <span data-i18n="menu.language">Limba</span>
+      <select th:replace="~{fragments/layout :: languageSelect}"></select>
+    </div>
+    <form th:action="@{/logout}" method="post" class="nav-group-link-form">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <button type="submit" class="nav-group-link nav-group-link-button" aria-label="Deconectare" title="Deconectare" data-i18n-aria-label="menu.logout" data-i18n-title="menu.logout">
+        <span class="material-icons" aria-hidden="true">logout</span><span data-i18n="menu.logout">Deconectare</span>
+      </button>
+    </form>
+    <form th:action="@{/settings/system/shutdown}" method="post" class="nav-group-link-form nav-group-shutdown-form">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <button type="submit"
+              class="nav-group-link nav-group-link-button nav-group-link-danger"
+              th:disabled="${!headerShutdownAvailable}"
+              onclick="return confirm('Sigur vrei să oprești aplicația acum?');"
+              aria-label="Oprește"
+              title="Oprește">
+        <span class="material-icons" aria-hidden="true">power_settings_new</span><span>Oprește</span>
+      </button>
+    </form>
+  </div>
+</details>
+
+<form th:fragment="churchSwitcher" method="post" th:action="@{/church/select}" class="church-switcher">
+  <input type="hidden" name="redirect" th:value="${headerCurrentPath}" />
+  <details class="church-select-menu">
+    <summary class="church-select-trigger" aria-label="Biserica activă" data-i18n-aria-label="menu.activeChurch">
+      <span class="church-select-current"
+            th:text="${headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name : 'Biserică'}"></span>
+      <img th:if="${headerActiveChurch != null and headerActiveChurch.avatarUrl != null and !#strings.isEmpty(headerActiveChurch.avatarUrl)}"
+           class="church-switcher-avatar"
+           th:src="${headerActiveChurch.avatarUrl}"
+           alt=""
+           aria-hidden="true"
+           onerror="this.style.display='none'" />
+      <span th:unless="${headerActiveChurch != null and headerActiveChurch.avatarUrl != null and !#strings.isEmpty(headerActiveChurch.avatarUrl)}"
+            class="material-icons church-select-placeholder-icon"
+            aria-hidden="true">location_city</span>
+    </summary>
+    <div class="church-select-options" role="listbox">
+      <button th:each="church : ${headerChurches}"
+              type="submit"
+              name="churchId"
+              th:value="${church.id}"
+              class="church-select-option"
+              th:classappend="${headerActiveChurchId != null and church.id == headerActiveChurchId} ? ' is-active'"
+              th:disabled="${headerActiveChurchId != null and church.id == headerActiveChurchId}">
+        <span class="church-option-name"
+              th:text="${church.name != null and !#strings.isEmpty(church.name) ? church.name : 'Biserică #' + church.id}"></span>
+        <img th:if="${church.avatarUrl != null and !#strings.isEmpty(church.avatarUrl)}"
+             class="church-option-avatar"
+             th:src="${church.avatarUrl}"
+             alt=""
+             aria-hidden="true"
+             onerror="this.style.display='none'" />
+        <span th:unless="${church.avatarUrl != null and !#strings.isEmpty(church.avatarUrl)}"
+              class="material-icons church-option-placeholder-icon"
+              aria-hidden="true">location_city</span>
+        <span th:if="${headerActiveChurchId != null and church.id == headerActiveChurchId}"
+              class="material-icons church-option-check"
+              aria-hidden="true">check</span>
+      </button>
+      <a th:href="@{/church/new}"
+         class="church-select-option">
+        <span class="church-option-name" data-i18n="settings.addChurch">Adaugă biserică</span>
+        <span class="material-icons church-option-placeholder-icon" aria-hidden="true">add_circle</span>
+      </a>
+    </div>
+  </details>
+</form>
+
+<button th:fragment="themeToggle" type="button" class="theme-toggle" data-theme-toggle aria-label="Activează dark mode" title="Dark mode"
+        data-i18n-aria-label="menu.toggleTheme" data-i18n-title="menu.toggleTheme"
+        onclick="(function(){var k='church-office-theme';var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{window.localStorage.setItem(k,n)}catch(e){}if(window.ChurchTheme&&window.ChurchTheme.apply){window.ChurchTheme.apply(n)}})()">
+  <span class="material-icons theme-icon theme-icon-light" aria-hidden="true">light_mode</span>
+  <span class="material-icons theme-icon theme-icon-dark" aria-hidden="true">dark_mode</span>
+</button>
+
+<select th:fragment="languageSelect" class="language-select language-select-compact" data-language-select aria-label="Language" data-i18n-aria-label="menu.language">
+  <option value="ro">🇷🇴</option>
+  <option value="en">🇬🇧</option>
+</select>
+</body>
+</html>

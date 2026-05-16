@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Setări'}">Setări</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <link rel="stylesheet" th:if="${activeTab == 'appearance'}" th:href="@{/css/settings-appearance.css}" />
+  <script defer th:if="${activeTab == 'appearance'}" th:src="@{/js/settings-appearance.js}"></script>
+  <script defer th:if="${activeTab == 'church'}" th:src="@{/js/church-form.js}"></script>
+  <script defer th:if="${activeTab == 'reports'}" th:src="@{/js/settings-reports.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 data-i18n="settings.title">Setări</h1>
+      <p class="settings-breadcrumb"
+         th:text="${'Setări / ' + (activeTab == 'appearance' ? 'Font & culori' : (activeTab == 'church' ? 'Editare Biserică' : (activeTab == 'pastoral' ? 'Pastoral' : (activeTab == 'reports' ? 'Rapoarte' : 'Sistem'))))}">Setări / Editare Biserică</p>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <div class="settings-shell">
+    <nav class="settings-nav">
+      <a th:href="@{/settings/appearance}" class="link-button" th:classappend="${activeTab == 'appearance'} ? ' is-active' : ''" data-i18n="settings.appearance">Font &amp; culori</a>
+      <a th:href="@{/settings/church}" class="link-button" th:classappend="${activeTab == 'church'} ? ' is-active' : ''" data-i18n="settings.church">Editare Biserică</a>
+      <a th:href="@{/settings/pastoral}" class="link-button" th:classappend="${activeTab == 'pastoral'} ? ' is-active' : ''" data-i18n="settings.pastoral">Pastoral</a>
+      <a th:href="@{/settings/reports}" class="link-button" th:classappend="${activeTab == 'reports'} ? ' is-active' : ''">Rapoarte</a>
+      <a th:href="@{/settings/system}" class="link-button" th:classappend="${activeTab == 'system'} ? ' is-active' : ''" data-i18n="settings.system">Sistem</a>
+      <span class="settings-nav-hint" th:if="${activeTab == 'appearance'}" data-i18n="settings.navHintAppearance">Controlează tema și culorile pentru elementele cheie.</span>
+      <span class="settings-nav-hint" th:if="${activeTab == 'pastoral'}" data-i18n="settings.navHintPastoral">Controlează regulile care alimentează cardul de atenție pastorală din dashboard.</span>
+    </nav>
+
+    <section class="settings-card appearance-settings-card" th:if="${activeTab == 'appearance'}">
+      <form method="post" th:action="@{/settings/appearance}" th:object="${appearanceForm}" class="settings-form" data-appearance-editor>
+        <section class="settings-appearance-group appearance-settings-block">
+          <h3 data-i18n="settings.statusCustomization">Personalizare stare</h3>
+          <div class="appearance-list"
+               data-appearance-list="status"
+               th:attr="data-config=*{statusCustomization}"></div>
+        </section>
+
+        <section class="settings-appearance-group appearance-settings-block">
+          <h3 data-i18n="settings.priorityCustomization">Personalizare prioritate</h3>
+          <div class="appearance-list"
+               data-appearance-list="priority"
+               th:attr="data-config=*{priorityCustomization}"></div>
+        </section>
+
+        <section class="settings-appearance-group appearance-settings-block">
+          <h3 data-i18n="settings.nameCustomization">Personalizare nume eveniment</h3>
+          <div class="appearance-list"
+               data-appearance-list="name"
+               th:attr="data-config=*{nameCustomization}"></div>
+        </section>
+
+        <div class="settings-hidden-json">
+          <textarea th:field="*{statusCustomization}" rows="8"></textarea>
+          <textarea th:field="*{priorityCustomization}" rows="8"></textarea>
+          <textarea th:field="*{nameCustomization}" rows="5"></textarea>
+        </div>
+
+        <div class="settings-actions">
+          <button type="button" class="link-button" data-i18n="settings.resetColors" data-reset-appearance-colors>Resetează culorile</button>
+          <button type="submit" class="button primary" data-i18n="actions.save">Salvează</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="settings-card" th:if="${activeTab == 'church'}">
+      <form method="post" th:action="@{/settings/church}" th:object="${churchForm}" class="event-form church-form" data-church-form th:attr="data-avatar-upload-url=@{/church/avatar-upload}">
+        <input type="hidden" th:field="*{currentChurchId}" />
+        <section class="form-grid">
+          <label>
+            <span>Numele bisericii</span>
+            <input type="text" th:field="*{currentChurchName}" required />
+          </label>
+          <label>
+            <span data-i18n="settings.address">Adresă</span>
+            <input type="text" th:field="*{address}" />
+          </label>
+        </section>
+
+        <section class="church-avatar-editor">
+          <div class="church-avatar-edit-grid">
+            <div class="church-avatar-preview-wrap" data-avatar-preview-wrap>
+              <img class="church-avatar-preview"
+                   data-avatar-preview
+                   th:classappend="${churchForm.avatarUrl != null and !#strings.isEmpty(churchForm.avatarUrl)} ? '' : ' is-hidden'"
+                   th:src="${churchForm.avatarUrl}"
+                   alt="Preview avatar" />
+              <span class="church-avatar-preview-placeholder"
+                    data-avatar-placeholder
+                    th:classappend="${churchForm.avatarUrl != null and !#strings.isEmpty(churchForm.avatarUrl)} ? ' is-hidden' : ''">B</span>
+              <button type="button" class="church-avatar-trigger" data-avatar-upload>
+                <span class="church-avatar-trigger-empty" data-i18n="settings.churchAvatarAdd">↑ Adaugă poză biserică</span>
+                <span class="church-avatar-trigger-hover" data-i18n="settings.churchAvatarUpload">↑ Încarcă</span>
+              </button>
+            </div>
+            <div class="church-avatar-fields">
+              <label>
+                <span>Avatar URL</span>
+                <input type="text" th:field="*{avatarUrl}" data-avatar-url placeholder="https://... sau /uploads/church/..." />
+              </label>
+              <div class="church-avatar-actions">
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-avatar-file hidden />
+                <button type="button" class="link-button" data-avatar-clear data-i18n="settings.churchAvatarDelete">Șterge poză</button>
+              </div>
+              <p class="muted church-avatar-error" data-avatar-error></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-grid">
+          <label>
+            <span data-i18n="settings.pastor">Pastor</span>
+            <input type="text" th:field="*{pastorName}" />
+          </label>
+          <label>
+            <span data-i18n="settings.pastorPhone">Telefon pastor</span>
+            <input type="text" th:field="*{pastorPhone}" />
+          </label>
+          <label>
+            <span data-i18n="settings.secretary">Secretar</span>
+            <input type="text" th:field="*{secretaryName}" />
+          </label>
+          <label>
+            <span data-i18n="settings.secretaryPhone">Telefon secretar</span>
+            <input type="text" th:field="*{secretaryPhone}" />
+          </label>
+          <label>
+            <span data-i18n="settings.treasurer">Trezorier</span>
+            <input type="text" th:field="*{treasurerName}" />
+          </label>
+          <label>
+            <span data-i18n="settings.treasurerPhone">Telefon trezorier</span>
+            <input type="text" th:field="*{treasurerPhone}" />
+          </label>
+        </section>
+
+        <div class="form-actions">
+          <button type="submit" class="button primary">Salvează</button>
+        </div>
+      </form>
+      <form method="post" th:action="@{/settings/church/delete}" class="settings-form"
+            th:if="${churchForm.currentChurchId != null}" style="margin-top:16px;">
+        <input type="hidden" name="churchId" th:value="${churchForm.currentChurchId}" />
+        <div class="settings-actions church-tools-actions">
+          <button type="submit"
+                  class="button system-danger-button"
+                  onclick="const v=prompt('ATENȚIE: Se vor șterge definitiv biserica și toate datele asociate. Scrie DA pentru confirmare.'); return v === 'DA';">
+            Șterge biserica curentă
+          </button>
+        </div>
+      </form>
+
+    </section>
+
+    <section class="settings-card" th:if="${activeTab == 'reports'}">
+      <form method="post" th:action="@{/settings/reports}" th:object="${reportsOrderForm}" class="settings-form" data-reports-order-form>
+        <section class="settings-group-card">
+          <h3>Ordine componente rapoarte</h3>
+          <p class="muted compact">Trage și plasează pentru a schimba ordinea în pagina de rapoarte, apoi salvează.</p>
+          <input type="hidden" th:field="*{layoutOrder}" data-report-order-input />
+          <ul class="report-order-list" data-report-order-list>
+            <li th:each="key : ${#strings.arraySplit(reportsOrderForm.layoutOrder, ',')}"
+                class="report-order-item"
+                draggable="true"
+                th:attr="data-report-key=${key}">
+              <span class="report-order-handle material-icons" aria-hidden="true">drag_indicator</span>
+              <span th:switch="${key}">
+                <span th:case="'attendance-period'">Prezență pe perioadă</span>
+                <span th:case="'attendance-groups'">Prezență pe grupuri</span>
+                <span th:case="'pastoral-follow-up'">Follow-up pastoral</span>
+                <span th:case="'small-group-health'">Sănătate grupuri mici</span>
+                <span th:case="'age-distribution'">Distribuție pe vârstă</span>
+                <span th:case="'people-categories'">Persoane pe categorii</span>
+                <span th:case="'key-moments'">Aniversări și momente cheie</span>
+                <span th:case="'events-status'">Evenimente după status</span>
+                <span th:case="'events-type'">Evenimente după tip</span>
+                <span th:case="'finance'">Financiar</span>
+                <span th:case="*">Componentă</span>
+              </span>
+            </li>
+          </ul>
+        </section>
+        <div class="settings-actions">
+          <button type="submit" class="button primary">Salvează ordinea</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="settings-card system-settings-card" th:if="${activeTab == 'system'}">
+      <div class="system-v2-grid">
+        <div class="system-v2-stack">
+          <form method="post" th:action="@{/settings/system}" th:object="${systemForm}" class="system-v2-card system-v2-card-general">
+            <header class="system-v2-head">
+              <h3 data-i18n="settings.systemGeneral">General</h3>
+              <p class="muted compact" data-i18n="settings.systemGeneralHint">Preferințe de afișare și securitate.</p>
+            </header>
+            <div class="system-v2-rows">
+              <label class="system-v2-row">
+                <span data-i18n="settings.systemRowsPerPage">Rânduri implicite pe pagină</span>
+                <select th:field="*{rowsPerPage}">
+                  <option th:each="value : ${rowOptions}" th:value="${value}" th:text="${value}"></option>
+                </select>
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span data-i18n="settings.systemEventTasksEnabled">Activează task-uri pe evenimente</span>
+                <input type="checkbox" th:field="*{eventTasksEnabled}" class="ios-switch" />
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span data-i18n="settings.systemPrivateMode">Mod privat</span>
+                <input type="checkbox" th:field="*{privateMode}" class="ios-switch" />
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span data-i18n="settings.systemPasswordRestrictions">Activează restricții parolă</span>
+                <input type="checkbox" th:field="*{passwordRestrictionsEnabled}" class="ios-switch" />
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span data-i18n="settings.systemMinPassword">Parolă minim 6 caractere</span>
+                <input type="checkbox" th:field="*{passwordMinSixEnabled}" class="ios-switch" />
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span>Solicită parolă.</span>
+                <input type="checkbox" th:field="*{userCreateRequirePassword}" class="ios-switch" />
+              </label>
+            </div>
+            <footer class="system-v2-actions">
+              <button type="submit" class="button primary" data-i18n="actions.save">Salvează</button>
+            </footer>
+          </form>
+
+          <form method="post" th:action="@{/settings/system/runtime-mode}" th:object="${runtimeModeForm}" class="system-v2-card system-v2-card-general">
+            <header class="system-v2-head">
+              <h3 data-i18n="settings.systemRuntime">Runtime desktop</h3>
+              <p class="muted compact" data-i18n="settings.systemRuntimeHint">Mod de rulare pentru desktop.</p>
+            </header>
+            <div class="system-v2-rows">
+              <label class="system-v2-row">
+                <span data-i18n="settings.systemDbMode">Mod bază de date</span>
+                <select th:field="*{mode}">
+                  <option value="prod">PROD</option>
+                  <option value="dev">DEV</option>
+                </select>
+              </label>
+              <label class="system-v2-row toggle-row">
+                <span data-i18n="settings.systemCloneOnDev">Clonează baza curentă la comutare pe DEV</span>
+                <input type="checkbox" th:field="*{cloneFromCurrent}" class="ios-switch" />
+              </label>
+              <div class="system-v2-row meta-row">
+                <span data-i18n="settings.systemCurrentMode">Mod curent</span>
+                <strong th:text="${runtimeModeCurrent}">prod</strong>
+              </div>
+              <div class="system-v2-row meta-row">
+                <span data-i18n="settings.systemDbFile">Fișier DB</span>
+                <code th:text="${runtimeDatabaseFileBase}">/path/to/db</code>
+              </div>
+            </div>
+            <footer class="system-v2-actions">
+              <button type="submit" class="button primary" th:disabled="${!desktopProfile}" data-i18n="settings.systemApplyDbMode">Aplică modul DB</button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-card" th:if="${activeTab == 'pastoral'}">
+      <form method="post" th:action="@{/settings/pastoral}" th:object="${pastoralForm}" class="settings-form">
+        <div class="settings-subsection settings-group-card">
+          <h3 data-i18n="settings.pastoralRules">Reguli recomandări</h3>
+          <div class="settings-grid">
+            <label class="settings-field">
+              <span data-i18n="settings.pastoralAbsenceCount">Absențe consecutive</span>
+              <input type="number" min="1" max="10" th:field="*{pastoralAbsenceCount}" />
+              <small class="muted" data-i18n="settings.pastoralAbsenceCountHint">Câte absențe recente declanșează recomandarea de contact.</small>
+            </label>
+            <label class="settings-field">
+              <span data-i18n="settings.pastoralAnalysisDays">Zile analizate</span>
+              <input type="number" min="7" max="365" th:field="*{pastoralAnalysisDays}" />
+              <small class="muted" data-i18n="settings.pastoralAnalysisDaysHint">Perioada în care se caută prezențe și absențe relevante.</small>
+            </label>
+            <label class="settings-field">
+              <span data-i18n="settings.pastoralBirthdayWindow">Interval zile de naștere</span>
+              <input type="number" min="0" max="90" th:field="*{pastoralBirthdayWindowDays}" />
+              <small class="muted" data-i18n="settings.pastoralBirthdayWindowHint">Câte zile înainte să apară recomandarea pentru aniversări.</small>
+            </label>
+            <label class="settings-field">
+              <span data-i18n="settings.pastoralSnoozeDays">Zile amânare</span>
+              <input type="number" min="1" max="90" th:field="*{pastoralSnoozeDays}" />
+              <small class="muted" data-i18n="settings.pastoralSnoozeDaysHint">Câte zile ascunde butonul „Amână”.</small>
+            </label>
+            <label class="settings-field">
+              <span data-i18n="settings.pastoralMaxRecommendations">Maxim recomandări afișate</span>
+              <input type="number" min="1" max="50" th:field="*{pastoralMaxRecommendations}" />
+              <small class="muted" data-i18n="settings.pastoralMaxRecommendationsHint">Limita de recomandări afișate simultan pe dashboard.</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-subsection settings-group-card">
+          <h3 data-i18n="settings.pastoralActiveTypes">Tipuri active</h3>
+          <p class="muted" data-i18n="settings.pastoralActiveTypesHint">Dezactivează regulile care nu sunt relevante pentru fluxul curent al bisericii.</p>
+          <div class="settings-grid">
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableAbsence}" />
+              <span data-i18n="settings.pastoralTypeAbsence">Absență</span>
+            </label>
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableChildAbsence}" />
+              <span data-i18n="settings.pastoralTypeChildAbsence">Copil absent</span>
+            </label>
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableOverdueFollowUp}" />
+              <span data-i18n="settings.pastoralTypeOverdueFollowUp">Follow-up întârziat</span>
+            </label>
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableWithoutGroup}" />
+              <span data-i18n="settings.pastoralTypeWithoutGroup">Fără grup</span>
+            </label>
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableNewPerson}" />
+              <span data-i18n="settings.pastoralTypeNewPerson">Persoană nouă</span>
+            </label>
+            <label class="checkbox-inline settings-checkbox">
+              <input type="checkbox" th:field="*{pastoralEnableBirthday}" />
+              <span data-i18n="settings.pastoralTypeBirthday">Zi de naștere</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-subsection settings-group-card">
+          <h3 data-i18n="settings.pastoralTemplates">Șabloane follow-up</h3>
+          <p class="muted" data-i18n="settings.pastoralTemplatesHint">Textul de mai jos este adăugat automat în notițe când creezi follow-up dintr-o recomandare.</p>
+          <div class="settings-grid">
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeAbsence">Absență</span>
+              <textarea rows="3" th:field="*{pastoralTemplateAbsence}"></textarea>
+            </label>
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeChildAbsence">Copil absent</span>
+              <textarea rows="3" th:field="*{pastoralTemplateChildAbsence}"></textarea>
+            </label>
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeOverdueFollowUp">Follow-up întârziat</span>
+              <textarea rows="3" th:field="*{pastoralTemplateOverdueFollowUp}"></textarea>
+            </label>
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeWithoutGroup">Fără grup</span>
+              <textarea rows="3" th:field="*{pastoralTemplateWithoutGroup}"></textarea>
+            </label>
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeNewPerson">Persoană nouă</span>
+              <textarea rows="3" th:field="*{pastoralTemplateNewPerson}"></textarea>
+            </label>
+            <label class="settings-field settings-field-wide">
+              <span data-i18n="settings.pastoralTypeBirthday">Zi de naștere</span>
+              <textarea rows="3" th:field="*{pastoralTemplateBirthday}"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-subsection settings-group-card">
+          <h3 data-i18n="settings.pastoralRecommendedValues">Valori recomandate</h3>
+          <p class="muted" data-i18n="settings.pastoralRecommendedValuesHint">Pentru o biserică medie: 3 absențe, 90 zile analizate, aniversări cu 14 zile înainte, amânare 7 zile și maxim 12 recomandări.</p>
+        </div>
+
+        <div class="settings-actions">
+          <button type="submit" class="button primary" data-i18n="actions.save">Salvează</button>
+          <a th:href="@{/dashboard}" class="link-button" data-i18n="settings.viewDashboard">Vezi dashboard</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<script th:if="${activeTab == 'appearance'}" th:inline="javascript">
+  window.settingsAppearanceConfig = {
+    statuses: ['TODO', 'PLANNED', 'IN_PROGRESS', 'DONE', 'CANCELED'],
+    priorities: [1, 2, 3, 4, 5],
+    priorityLabels: {
+      1: 'Ridicată',
+      2: 'Medie-ridicată',
+      3: 'Medie',
+      4: 'Medie-scăzută',
+      5: 'Scăzută'
+    },
+    palette: [
+      '#B91C1C', '#DC2626', '#EF4444', '#F87171',
+      '#C2410C', '#EA580C', '#F97316', '#FB923C',
+      '#A16207', '#B45309', '#CA8A04', '#D97706', '#EAB308', '#FACC15',
+      '#15803D', '#16A34A', '#22C55E', '#86EFAC',
+      '#047857', '#0F766E', '#059669', '#10B981', '#6EE7B7',
+      '#0E7490', '#0891B2', '#06B6D4', '#67E8F9',
+      '#1D4ED8', '#2563EB', '#3B82F6', '#93C5FD',
+      '#4338CA', '#4F46E5', '#6366F1', '#A5B4FC',
+      '#6D28D9', '#7C3AED', '#8B5CF6', '#C4B5FD',
+      '#A21CAF', '#C026D3', '#D946EF', '#F0ABFC',
+      '#BE123C', '#E11D48', '#F43F5E', '#FDA4AF',
+      '#374151', '#475569', '#4B5563', '#6B7280', '#9CA3AF',
+      '#111827', '#1F2937', '#334155', '#64748B'
+    ],
+    statusDefaults: {
+      TODO: { color: '#B45309', fullCell: false },
+      PLANNED: { color: '#64748B', fullCell: false },
+      IN_PROGRESS: { color: '#0F766E', fullCell: false },
+      DONE: { color: '#2563EB', fullCell: false },
+      CANCELED: { color: '#6B7280', fullCell: false }
+    },
+    priorityDefaults: {
+      1: { color: '#B45309', fullCell: false },
+      2: { color: '#D97706', fullCell: false },
+      3: { color: '#2563EB', fullCell: false },
+      4: { color: '#0F766E', fullCell: false },
+      5: { color: '#64748B', fullCell: false }
+    },
+    nameDefaults: {
+      color: '#475569',
+      fullCell: false
+    }
+  };
+</script>
+<script th:if="${activeTab == 'system'}">
+  (function () {
+    const i18n = window.teamleafI18n;
+    const t = function (key, fallback) {
+      if (i18n && typeof i18n.t === 'function') {
+        return i18n.t(key, fallback);
+      }
+      return fallback;
+    };
+    const links = Array.from(document.querySelectorAll('.js-export-link'));
+    if (!links.length) return;
+
+    const checksumRow = document.getElementById('exportChecksumRow');
+    const checksumValue = document.getElementById('exportChecksumValue');
+    const copyBtn = document.getElementById('copyExportChecksumBtn');
+
+    function parseFilename(disposition) {
+      if (!disposition) return 'export.zip';
+      const match = disposition.match(/filename="([^"]+)"/i);
+      return match && match[1] ? match[1] : 'export.zip';
+    }
+
+    async function copyChecksum() {
+      const value = checksumValue ? checksumValue.textContent : '';
+      if (!value) return;
+      try {
+        await navigator.clipboard.writeText(value);
+        copyBtn.textContent = t('settings.systemCopyChecksumDone', 'Copiat');
+        setTimeout(() => { copyBtn.textContent = t('settings.systemCopyChecksum', 'Copiază checksum'); }, 1200);
+      } catch (_) {
+        copyBtn.textContent = t('settings.systemCopyChecksumFailed', 'Nu s-a putut copia');
+        setTimeout(() => { copyBtn.textContent = t('settings.systemCopyChecksum', 'Copiază checksum'); }, 1600);
+      }
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', copyChecksum);
+    }
+
+    links.forEach(link => {
+      link.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const href = link.getAttribute('href');
+        if (!href) return;
+        const originalText = link.textContent;
+        link.textContent = t('settings.systemExportBusy', 'Se exportă...');
+        link.classList.add('is-busy');
+        try {
+          const response = await fetch(href, { credentials: 'same-origin' });
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Export eșuat');
+          }
+          const contentType = (response.headers.get('Content-Type') || '').toLowerCase();
+          const disposition = response.headers.get('Content-Disposition');
+          const filename = parseFilename(disposition);
+          const checksum = response.headers.get('X-Checksum-SHA256');
+          const blob = await response.blob();
+          if (!contentType.includes('application/zip')) {
+            const text = await blob.text();
+            throw new Error(text || t('settings.systemExportFailed', 'Exportul a eșuat. Încearcă din nou.'));
+          }
+          if (blob.size < 64) {
+            throw new Error(t('settings.systemExportArchiveTooSmall', 'Arhiva exportată este prea mică și pare invalidă.'));
+          }
+
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+
+          if (checksum && checksumRow && checksumValue) {
+            checksumRow.style.display = '';
+            checksumValue.textContent = checksum;
+          }
+        } catch (err) {
+          const msg = err && err.message ? err.message : t('settings.systemExportFailed', 'Exportul a eșuat. Încearcă din nou.');
+          alert(msg);
+        } finally {
+          link.textContent = originalText;
+          link.classList.remove('is-busy');
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

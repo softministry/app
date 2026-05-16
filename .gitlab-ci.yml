@@ -1,0 +1,29 @@
+stages:
+  - build
+  - test
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  key: "${CI_PROJECT_NAME}"
+  paths:
+    - .m2/repository/
+
+build:
+  stage: build
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn -Dmaven.test.skip=true package
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - target/*.jar
+      - target/*.jar.original
+
+test:
+  stage: test
+  image: maven:3.9.8-eclipse-temurin-21
+  script:
+    - mvn -DskipTests compile

@@ -1,0 +1,88 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F8FB"/>
+      <stop offset="1" stop-color="#EEF1F6"/>
+    </linearGradient>
+    <filter id="cardShadow" x="0" y="0" width="2000" height="1400" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0B1220" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1100" fill="url(#bg)"/>
+
+  <rect x="44" y="36" width="1512" height="72" rx="20" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="84" y="80" fill="#0F172A" font-family="SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="600">Settings</text>
+  <rect x="1368" y="54" width="148" height="36" rx="18" fill="#F1F5F9"/>
+  <text x="1417" y="78" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="500">Betania</text>
+
+  <rect x="44" y="132" width="300" height="924" rx="24" fill="#FFFFFF" filter="url(#cardShadow)"/>
+  <text x="84" y="184" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="13" font-weight="600" letter-spacing="1.2">SECTIONS</text>
+
+  <rect x="72" y="210" width="244" height="46" rx="14" fill="#F8FAFC"/>
+  <text x="104" y="239" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16" font-weight="500">Appearance</text>
+
+  <rect x="72" y="266" width="244" height="46" rx="14" fill="#F8FAFC"/>
+  <text x="104" y="295" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16" font-weight="500">Church</text>
+
+  <rect x="72" y="322" width="244" height="46" rx="14" fill="#F8FAFC"/>
+  <text x="104" y="351" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16" font-weight="500">Pastoral</text>
+
+  <rect x="72" y="378" width="244" height="46" rx="14" fill="#E8F0FF"/>
+  <text x="104" y="407" fill="#1D4ED8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16" font-weight="600">System</text>
+
+  <rect x="372" y="132" width="1184" height="924" rx="24" fill="#FFFFFF" filter="url(#cardShadow)"/>
+
+  <text x="424" y="188" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="34" font-weight="700">System</text>
+  <text x="424" y="220" fill="#64748B" font-family="SF Pro Text, -apple-system, sans-serif" font-size="17">Runtime and database controls for desktop deployments</text>
+
+  <rect x="424" y="248" width="1080" height="228" rx="18" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="456" y="290" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="24" font-weight="600">General</text>
+
+  <text x="456" y="336" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="500">Default rows per page</text>
+  <rect x="456" y="350" width="320" height="46" rx="12" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <text x="478" y="379" fill="#0F172A" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16">10</text>
+  <text x="744" y="379" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16">▾</text>
+
+  <rect x="456" y="410" width="500" height="38" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <circle cx="480" cy="429" r="8" fill="#2563EB"/>
+  <text x="504" y="434" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Enable event tasks</text>
+
+  <rect x="972" y="410" width="500" height="38" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <circle cx="996" cy="429" r="8" fill="#CBD5E1"/>
+  <text x="1020" y="434" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Private mode</text>
+
+  <rect x="456" y="488" width="1080" height="214" rx="18" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="456" y="530" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="24" font-weight="600">Database</text>
+
+  <rect x="456" y="550" width="154" height="40" rx="12" fill="#EEF2FF"/>
+  <text x="493" y="575" fill="#3730A3" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14" font-weight="600">Export DB</text>
+
+  <rect x="622" y="550" width="154" height="40" rx="12" fill="#EEF2FF"/>
+  <text x="656" y="575" fill="#3730A3" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14" font-weight="600">Export fresh</text>
+
+  <text x="456" y="623" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="500">Import archive</text>
+  <rect x="456" y="638" width="760" height="44" rx="12" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <text x="478" y="666" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">No file selected</text>
+  <rect x="1232" y="638" width="160" height="44" rx="12" fill="#1D4ED8"/>
+  <text x="1288" y="666" fill="#FFFFFF" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="600">Import</text>
+
+  <rect x="424" y="718" width="1080" height="286" rx="18" fill="#FAFBFD" stroke="#E2E8F0"/>
+  <text x="456" y="760" fill="#0F172A" font-family="SF Pro Display, -apple-system, sans-serif" font-size="24" font-weight="600">Desktop Runtime</text>
+  <text x="456" y="789" fill="#64748B" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Switch between production and testing database profiles</text>
+
+  <text x="456" y="834" fill="#475569" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15" font-weight="500">Database mode</text>
+  <rect x="456" y="848" width="360" height="46" rx="12" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <text x="478" y="877" fill="#0F172A" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16">PROD (current)</text>
+  <text x="782" y="877" fill="#94A3B8" font-family="SF Pro Text, -apple-system, sans-serif" font-size="16">▾</text>
+
+  <rect x="456" y="908" width="684" height="38" rx="10" fill="#FFFFFF" stroke="#D5DEE9"/>
+  <circle cx="480" cy="927" r="8" fill="#2563EB"/>
+  <text x="504" y="932" fill="#334155" font-family="SF Pro Text, -apple-system, sans-serif" font-size="15">Clone current DB into dev dataset on first switch</text>
+
+  <rect x="456" y="958" width="280" height="42" rx="12" fill="#0F172A"/>
+  <text x="515" y="984" fill="#FFFFFF" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14" font-weight="600">Apply DB mode (restart required)</text>
+
+  <rect x="1256" y="958" width="248" height="42" rx="12" fill="#FFF1F2" stroke="#FECACA"/>
+  <text x="1324" y="984" fill="#B91C1C" font-family="SF Pro Text, -apple-system, sans-serif" font-size="14" font-weight="600">Stop application</text>
+</svg>

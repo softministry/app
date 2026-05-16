@@ -1,0 +1,31 @@
+server:
+  port: 85
+
+spring:
+  datasource:
+    url: jdbc:sqlite:${user.home}/ChurchAdministrationPlatform/data/ministryadmin-dev-ro.sqlite.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: true
+  thymeleaf:
+    mode: HTML
+    cache: false
+  flyway:
+    enabled: false
+
+theme:
+  app:
+    title: "Church Administration Platform (dev-ro)"
+
+logging:
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF

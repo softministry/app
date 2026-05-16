@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="3;url=/login" />
+  <title>Deconectare</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell page-shell-auth">
+  <section class="card auth-card">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Church Administration Platform</p>
+        <h1>Autentificare</h1>
+      </div>
+    </div>
+
+    <section class="flash flash-success">
+      Te-ai deconectat cu succes. În 3 secunde vei fi redirecționat către login.
+    </section>
+
+    <p>
+      <a th:href="@{/login}" class="link">Mergi acum la login</a>
+    </p>
+  </section>
+</div>
+
+<script>
+  window.setTimeout(function () {
+    window.location.href = "/login";
+  }, 3000);
+</script>
+</body>
+</html>

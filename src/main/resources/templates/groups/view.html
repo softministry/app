@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + group.name}">Grup</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" th:text="${@uiLabels.groupType(group.type)}">Echipă</p>
+      <h1 th:text="${group.name}">Grup</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/groups}" class="header-action-icon" aria-label="Înapoi" title="Înapoi">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <a th:href="@{'/groups/' + ${group.id} + '/edit'}" class="button primary header-action-icon" aria-label="Editează" title="Editează">
+        <span class="material-icons" aria-hidden="true">edit</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <div class="card-grid">
+    <section class="card">
+      <h2>Detalii</h2>
+      <dl class="kv">
+        <div>
+          <dt>Tip</dt>
+          <dd th:text="${@uiLabels.groupType(group.type)}">Echipă</dd>
+        </div>
+        <div>
+          <dt>Lider</dt>
+          <dd>
+            <a th:if="${group.leader != null}" th:href="@{'/persons/' + ${group.leader.id}}" class="link"
+               th:text="${#strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) != '' ? #strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) : 'Persoană fără nume'}">Lider</a>
+            <span th:if="${group.leader == null}">—</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Membri</dt>
+          <dd th:text="${members != null ? members.size() : 0}">0</dd>
+        </div>
+      </dl>
+      <p class="muted" th:text="${group.description != null and !#strings.isEmpty(group.description) ? group.description : 'Nu există descriere.'}">Descriere</p>
+    </section>
+
+    <section class="card">
+      <h2>Membri</h2>
+      <ul class="list">
+        <li th:each="member : ${members}">
+          <a th:href="@{'/persons/' + ${member.id}}" class="link"
+             th:text="${#strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) != '' ? #strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) : 'Persoană fără nume'}">Membru</a>
+          <span class="muted" th:if="${group.leader != null and member.id == group.leader.id}"> · lider</span>
+        </li>
+        <li th:if="${members.empty}" class="muted">Nu există membri în acest grup.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Evenimente asociate</h2>
+      <ul class="list">
+        <li th:each="event : ${events}">
+          <a th:href="@{'/events/' + ${event.id} + '/edit'}" class="link" th:text="${event.eventName}">Eveniment</a>
+          <span class="muted" th:text="${event.openDate != null ? ' · ' + event.openDate : ''}"></span>
+        </li>
+        <li th:if="${events.empty}" class="muted">Nu există evenimente asociate acestui grup.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+</body>
+</html>

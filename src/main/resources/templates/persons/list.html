@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Persoane'}">Persoane</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 data-i18n="persons.title">Persoane</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/persons/new}" class="button primary header-action-icon" aria-label="Adaugă persoană" title="Adaugă persoană" data-i18n-aria-label="persons.add" data-i18n-title="persons.add">
+        <span class="material-icons" aria-hidden="true">person_add</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form method="get"
+        th:action="@{/persons}"
+        class="toolbar"
+        data-partial-form
+        data-partial-endpoint="/persons/results"
+        data-partial-target="[data-persons-results]">
+    <input type="hidden" name="page" value="1" />
+    <label class="toolbar-item">
+      <span data-i18n="search.label">Caută</span>
+      <input type="text" name="q" th:value="${q}" placeholder="Nume..." data-i18n-placeholder="search.namePlaceholder" />
+    </label>
+    <label class="toolbar-item">
+      <span data-i18n="memberType.filterLabel">Tip</span>
+      <select name="memberType" data-partial-auto-submit>
+        <option value="" data-i18n="memberType.ALL">Toate</option>
+        <option th:each="t : ${memberTypes}" th:value="${t}" th:text="${@uiLabels.memberType(t)}"
+                th:attr="data-i18n=${'memberType.' + t.name()}"
+                th:selected="${memberType != null and memberType == t}"></option>
+      </select>
+    </label>
+    <div class="toolbar-actions toolbar-icon-actions">
+      <a th:href="@{/persons}" class="icon-button" aria-label="Resetează filtre" data-i18n-aria-label="actions.resetFilters">
+        <span class="material-icons" aria-hidden="true">restart_alt</span>
+      </a>
+    </div>
+  </form>
+
+  <section data-persons-results th:fragment="resultsSection">
+  <div class="table-scroll" th:classappend="${scrollOnly} ? ' table-scroll-contained' : ''">
+  <table class="stripe persons-table">
+    <colgroup>
+      <col class="col-number" />
+      <col class="col-name" />
+      <col class="col-type" />
+      <col class="col-groups" />
+      <col class="col-role" />
+      <col class="col-phone" />
+      <col class="col-actions" />
+    </colgroup>
+    <thead>
+    <tr>
+      <th>#</th>
+      <th data-i18n="persons.name">Nume</th>
+      <th data-i18n="memberType.filterLabel">Tip</th>
+      <th data-i18n="persons.groups">Grupuri</th>
+      <th data-i18n="persons.role">Rol</th>
+      <th data-i18n="persons.phone">Telefon</th>
+      <th class="actions" data-i18n="actions_label">Acțiuni</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p, stat : ${persons}">
+      <td th:text="${stat.count + '.'}">1.</td>
+      <td>
+        <a th:href="@{'/persons/' + ${p.id}}" class="link" th:text="${p.fullName}">Nume</a>
+        <p class="muted" th:text="${p.address}"></p>
+      </td>
+      <td class="member-type-cell">
+        <span th:if="${p.memberType != null}"
+              th:text="${@uiLabels.memberType(p.memberType)}"
+              class="member-type-label"
+              th:attr="data-i18n=${'memberType.' + p.memberType.name()}"></span>
+        <span th:if="${p.memberType == null}">—</span>
+      </td>
+      <td class="person-groups-cell"
+          th:with="personGroups=${personGroupsById[p.id]}">
+        <div class="person-group-links" th:if="${personGroups != null and !personGroups.empty}">
+          <a th:each="group, groupStat : ${personGroups}"
+             th:if="${groupStat.index < 3}"
+             th:href="@{'/groups/' + ${group.id()}}"
+             class="person-group-chip"
+             th:title="${group.type() != null and !#strings.isEmpty(group.type()) ? group.name() + ' · ' + @uiLabels.groupType(group.type()) : group.name()}"
+             th:text="${group.name()}">Grup</a>
+          <span th:if="${personGroups.size() > 3}"
+                class="person-group-more"
+                th:text="${'+' + (personGroups.size() - 3)}">+1</span>
+        </div>
+        <span th:if="${personGroups == null or personGroups.empty}" class="muted">—</span>
+      </td>
+      <td class="person-role-cell" th:text="${p.churchRole != null and !#strings.isEmpty(p.churchRole) ? p.churchRole : '—'}"></td>
+      <td class="person-phone-cell" th:text="${p.phone != null and !#strings.isEmpty(p.phone) ? p.phone : '—'}"></td>
+      <td class="actions">
+        <a th:href="@{'/persons/' + ${p.id} + '/edit'}" class="icon-button" aria-label="Editează" data-i18n-aria-label="actions.edit">
+          <span class="material-icons" aria-hidden="true">edit</span>
+        </a>
+        <form th:action="@{'/persons/' + ${p.id} + '/delete'}" method="post" class="inline-form">
+          <button type="submit" class="icon-button icon-button-danger" aria-label="Șterge" data-i18n-aria-label="actions.delete">
+            <span class="material-icons" aria-hidden="true">delete</span>
+          </button>
+        </form>
+      </td>
+    </tr>
+    <tr th:if="${persons.empty}">
+      <td colspan="7" class="muted" data-i18n="persons.empty">Nu există persoane pentru moment.</td>
+    </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="pagination-bar">
+    <a class="link-button" th:if="${!scrollOnly and page > 1}"
+       th:href="@{/persons(q=${q},memberType=${memberType},size=${size},scrollOnly=${scrollOnly},page=${page - 1})}"
+       data-partial-link
+       data-partial-endpoint="/persons/results"
+       data-partial-target="[data-persons-results]"
+       data-i18n="pagination.previous">Anterior</a>
+    <span class="pagination-info"
+          th:text="${scrollOnly ? totalItems + ' înregistrări' : 'Pagina ' + page + ' din ' + totalPages + ' (' + totalItems + ' înregistrări)'}"></span>
+    <a class="link-button" th:if="${!scrollOnly and page < totalPages}"
+       th:href="@{/persons(q=${q},memberType=${memberType},size=${size},scrollOnly=${scrollOnly},page=${page + 1})}"
+       data-partial-link
+       data-partial-endpoint="/persons/results"
+       data-partial-target="[data-persons-results]"
+       data-i18n="pagination.next">Următor</a>
+    <form method="get"
+          th:action="@{/persons}"
+          class="pagination-controls"
+          data-partial-pagination-form
+          data-partial-endpoint="/persons/results"
+          data-partial-target="[data-persons-results]">
+      <input type="hidden" name="q" th:value="${q}" />
+      <input type="hidden" name="memberType" th:value="${memberType}" />
+      <input type="hidden" name="page" value="1" />
+      <select name="size" onchange="this.form.submit()" aria-label="Număr rânduri">
+        <option th:each="pageSize : ${pageSizes}" th:value="${pageSize}" th:text="${pageSize}" th:selected="${size == pageSize}"></option>
+      </select>
+      <label class="checkbox-inline">
+        <input type="checkbox" name="scrollOnly" value="true" th:checked="${scrollOnly}" onchange="this.form.submit()" />
+        <span data-i18n="pagination.scrollOnly">Scroll only</span>
+      </label>
+    </form>
+  </div>
+  </section>
+</div>
+</body>
+</html>

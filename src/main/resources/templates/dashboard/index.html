@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Dashboard'}">Dashboard</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow" data-i18n="dashboard.brand">Church Administration Platform</p>
+      <h1 data-i18n="menu.dashboard">Dashboard</h1>
+      <p class="muted dashboard-header-subtitle" data-i18n="dashboard.subtitle">Panou operațional pentru coordonarea echipei și a cazurilor pastorale.</p>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+      <select th:replace="~{fragments/layout :: languageSelect}"></select>
+    </div>
+  </header>
+
+  <div class="card-grid dashboard-grid">
+    <section class="card card-wide dashboard-stat-strip">
+      <a th:href="@{/persons}" class="dashboard-stat-card">
+        <span class="material-icons" aria-hidden="true">groups</span>
+        <span class="dashboard-stat-label" data-i18n="persons.title">Persoane</span>
+        <strong th:text="${personCount}">0</strong>
+      </a>
+      <a th:href="@{/events}" class="dashboard-stat-card">
+        <span class="material-icons" aria-hidden="true">event</span>
+        <span class="dashboard-stat-label" data-i18n="menu.events">Evenimente</span>
+        <strong th:text="${eventCount}">0</strong>
+      </a>
+      <a th:href="@{/visits}" class="dashboard-stat-card">
+        <span class="material-icons" aria-hidden="true">handshake</span>
+        <span class="dashboard-stat-label" data-i18n="menu.visits">Vizite</span>
+        <strong th:text="${visitCount}">0</strong>
+      </a>
+      <a th:href="@{/follow-ups(due=true)}" class="dashboard-stat-card is-warning">
+        <span class="material-icons" aria-hidden="true">priority_high</span>
+        <span class="dashboard-stat-label" data-i18n="dashboard.dueFollowUp">Follow-up scadent</span>
+        <strong th:text="${dueFollowUpCount}">0</strong>
+      </a>
+      <a th:href="@{/follow-ups}" class="dashboard-stat-card">
+        <span class="material-icons" aria-hidden="true">support_agent</span>
+        <span class="dashboard-stat-label" data-i18n="dashboard.activeCases">Cazuri active</span>
+        <strong th:text="${pastoralPipeline.activeCount()}">0</strong>
+      </a>
+    </section>
+
+    <section class="card dashboard-panel-card">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">person_search</span><span data-i18n="dashboard.peopleStructure">Structură persoane</span></h2>
+        </div>
+      </div>
+      <dl class="kv compact-kv dashboard-person-breakdown">
+        <div>
+          <dt data-i18n="attendance.total">Total</dt>
+          <dd><a th:href="@{/persons}" class="metric-sub-link" th:text="${personCount}">0</a></dd>
+        </div>
+        <div>
+          <dt data-i18n="memberType.MEMBER">Membri</dt>
+          <dd><a th:href="@{/persons(memberType='MEMBER')}" class="metric-sub-link" th:text="${memberCount}">0</a></dd>
+        </div>
+        <div>
+          <dt data-i18n="memberType.CHILD">Copii</dt>
+          <dd><a th:href="@{/persons(memberType='CHILD')}" class="metric-sub-link" th:text="${childCount}">0</a></dd>
+        </div>
+        <div>
+          <dt data-i18n="dashboard.friends">Prieteni</dt>
+          <dd><a th:href="@{/persons(memberType='FREND')}" class="metric-sub-link" th:text="${friendCount}">0</a></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card dashboard-panel-card">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">how_to_reg</span><span data-i18n="dashboard.latestAttendance">Ultimele prezențe</span></h2>
+          <p class="muted" data-i18n="dashboard.latestAttendanceHint">Ultimele programe înregistrate și numărul de participanți.</p>
+        </div>
+      </div>
+      <div class="dashboard-mini-list" th:if="${attendanceSummaries != null and !attendanceSummaries.empty}">
+        <div class="dashboard-mini-row" th:each="item : ${attendanceSummaries}">
+          <a th:href="@{/attendance(date=${item.attendanceDate},session=${item.serviceSession})}" class="plain-link"
+             th:text="${#temporals.format(item.attendanceDate, 'dd-MM-yyyy') + ' · ' + @uiLabels.attendanceSession(item.serviceSession)}">01-01-2026 · Implicit</a>
+          <strong data-i18n-template="dashboard.presentCount"
+                  th:attr="data-i18n-param-count=${item.presentCount}">0 prezenți</strong>
+        </div>
+      </div>
+      <p class="muted" th:if="${attendanceSummaries == null or attendanceSummaries.empty}" data-i18n="dashboard.noAttendanceYet">Nu există prezențe salvate încă.</p>
+    </section>
+
+    <section class="card dashboard-panel-card">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">schedule</span><span data-i18n="dashboard.pastoralUrgencies">Urgențe pastorale</span></h2>
+          <p class="muted" data-i18n-template="dashboard.urgenciesSummary"
+             th:attr="data-i18n-param-open=${openFollowUpCount},data-i18n-param-upcoming=${upcomingFollowUpCount}">0 deschise</p>
+        </div>
+        <a th:href="@{/follow-ups(due=true)}" class="link" data-i18n="dashboard.viewAll">Vezi toate</a>
+      </div>
+      <div class="dashboard-mini-list" th:if="${dueFollowUps != null and !dueFollowUps.empty}">
+        <div class="dashboard-mini-row" th:each="item : ${dueFollowUps}">
+          <a th:href="@{'/follow-ups/' + ${item.id} + '/edit'}" class="plain-link"
+             th:text="${item.person != null ? ((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim() : 'Persoană'}">Persoană</a>
+          <form th:action="@{'/follow-ups/' + ${item.id} + '/status'}" method="post" class="inline-form">
+            <input type="hidden" name="status" value="DONE" />
+            <input type="hidden" name="redirect" value="/dashboard" />
+            <button type="submit" class="icon-button dashboard-action-icon" aria-label="Marchează rezolvat" title="Marchează rezolvat"
+                    data-i18n-aria-label="dashboard.markResolved" data-i18n-title="dashboard.markResolved">
+              <span class="material-icons" aria-hidden="true">task_alt</span>
+            </button>
+          </form>
+        </div>
+      </div>
+      <p class="muted" th:if="${dueFollowUps == null or dueFollowUps.empty}" data-i18n="dashboard.noDueToday">Nu există follow-up-uri scadente azi.</p>
+    </section>
+
+    <section class="card dashboard-panel-card dashboard-birthdays-card dashboard-birthdays-card-clickable"
+             data-birthdays-card
+             th:attr="data-href=@{/birthdays}"
+             th:classappend="${headerBirthdayNotifications == null or headerBirthdayNotifications.empty} ? ' is-empty'">
+      <div class="section-heading" th:if="${headerBirthdayNotifications != null and !headerBirthdayNotifications.empty}">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">cake</span><span data-i18n="dashboard.birthdays">Zile de naștere</span></h2>
+          <p class="muted" data-i18n="dashboard.birthdaysHint">Persoane care își sărbătoresc ziua de naștere în perioada configurată.</p>
+        </div>
+      </div>
+      <div class="dashboard-mini-list" th:if="${headerBirthdayNotifications != null and !headerBirthdayNotifications.empty}">
+        <div class="dashboard-mini-row" th:each="item : ${headerBirthdayNotifications}">
+          <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link" th:text="${item.personName()}">Persoană</a>
+          <div class="dashboard-birthday-meta">
+            <span th:if="${item.daysUntil() == 0}"
+                  data-i18n-template="dashboard.birthdayWhenToday"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()}">24-04 · Azi</span>
+            <span th:if="${item.daysUntil() == 1}"
+                  data-i18n-template="dashboard.birthdayWhenTomorrow"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()}">24-04 · Mâine</span>
+            <span th:if="${item.daysUntil() > 1}"
+                  data-i18n-template="dashboard.birthdayWhenInDays"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()},data-i18n-param-days=${item.daysUntil()}">24-04 · În 14 zile</span>
+            <form th:action="@{/notifications/birthdays/action}" method="post" class="inline-form">
+              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="hidden" name="personId" th:value="${item.personId()}" />
+              <input type="hidden" name="mode" value="snooze" />
+              <input type="hidden" name="redirect" value="/dashboard" />
+              <button type="submit" class="icon-button dashboard-action-icon" aria-label="Amână" title="Amână"
+                      data-i18n-aria-label="dashboard.snooze" data-i18n-title="dashboard.snooze">
+                <span class="material-icons" aria-hidden="true">schedule</span>
+              </button>
+            </form>
+            <form th:action="@{/notifications/birthdays/action}" method="post" class="inline-form">
+              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="hidden" name="personId" th:value="${item.personId()}" />
+              <input type="hidden" name="mode" value="done" />
+              <input type="hidden" name="redirect" value="/dashboard" />
+              <button type="submit" class="icon-button dashboard-action-icon" aria-label="Tratat" title="Tratat"
+                      data-i18n-aria-label="dashboard.markHandled" data-i18n-title="dashboard.markHandled">
+                <span class="material-icons" aria-hidden="true">done</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-birthday-empty-line" th:if="${headerBirthdayNotifications == null or headerBirthdayNotifications.empty}">
+        <span class="material-icons" aria-hidden="true">event_busy</span>
+        <span data-i18n="dashboard.noBirthdaysInPeriod">Nu există zile de naștere în această perioadă.</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">schema</span><span data-i18n="dashboard.caseWorkflow">Workflow cazuri</span></h2>
+        </div>
+      </div>
+      <div class="pipeline-grid">
+        <a class="pipeline-step" th:href="@{/follow-ups(status='OPEN')}">
+          <span class="pipeline-label" data-i18n="dashboard.workflowIdentifyNeed">Identificare nevoie</span>
+          <strong th:text="${pastoralPipeline.newCount()}">0</strong>
+        </a>
+        <a class="pipeline-step" th:href="@{/follow-ups(status='OPEN')}">
+          <span class="pipeline-label" data-i18n="dashboard.workflowFirstContact">Prim contact</span>
+          <strong th:text="${pastoralPipeline.contactedCount()}">0</strong>
+        </a>
+        <a class="pipeline-step" th:href="@{/follow-ups(status='IN_PROGRESS')}">
+          <span class="pipeline-label" data-i18n="dashboard.workflowSupportPlan">Plan de sprijin</span>
+          <strong th:text="${pastoralPipeline.inProgressCount()}">0</strong>
+        </a>
+        <a class="pipeline-step" th:href="@{/follow-ups(status='DONE')}">
+          <span class="pipeline-label" data-i18n="dashboard.workflowResolved">Rezolvat</span>
+          <strong th:text="${pastoralPipeline.resolvedCount()}">0</strong>
+        </a>
+      </div>
+      <p class="muted"
+         data-i18n-template="dashboard.activeCasesCount"
+         th:attr="data-i18n-param-count=${pastoralPipeline.activeCount()}">Cazuri active</p>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">monitoring</span><span data-i18n="dashboard.maxPastoralResponseTime">Timp maxim de răspuns pastoral</span></h2>
+          <p class="muted"
+             data-i18n-template="dashboard.slaTarget"
+             th:attr="data-i18n-param-days=${pastoralSla.thresholdDays()}">Obiectiv</p>
+        </div>
+      </div>
+      <div class="metric" th:text="${pastoralSla.complianceRate() + '%'}">100%</div>
+      <p class="muted"
+         data-i18n-template="dashboard.slaDetails"
+         th:attr="data-i18n-param-compliant=${pastoralSla.compliantCount()},data-i18n-param-breached=${pastoralSla.breachedCount()},data-i18n-param-highRisk=${pastoralSla.highRiskCount()}">Detalii</p>
+      <a th:href="@{/follow-ups(due=true)}" class="link" data-i18n="dashboard.viewBreachedCases">Vezi cazurile depășite</a>
+    </section>
+
+    <section class="card card-wide">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">assessment</span><span data-i18n="dashboard.operationalPastoralReports">Rapoarte pastorale operaționale</span></h2>
+          <p class="muted" data-i18n="dashboard.operationalReportsHint">Closed loop rate, timp până la contact și încărcare pe lider.</p>
+        </div>
+        <a th:href="@{/reports}" class="link" data-i18n="dashboard.openReports">Deschide rapoarte</a>
+      </div>
+      <dl class="kv compact-kv pastoral-kpi-grid">
+        <div>
+          <dt data-i18n="dashboard.closedLoopRate">Closed loop rate</dt>
+          <dd th:text="${pastoralReport.closedLoopRate() + '%'}">0%</dd>
+        </div>
+        <div>
+          <dt data-i18n="dashboard.avgTimeToContact">Timp mediu până la contact</dt>
+          <dd data-i18n-template="dashboard.daysCount"
+              th:attr="data-i18n-param-count=${pastoralReport.avgDaysToContact()}">0 zile</dd>
+        </div>
+        <div>
+          <dt data-i18n="dashboard.activeCases">Cazuri active</dt>
+          <dd th:text="${pastoralReport.activeCases()}">0</dd>
+        </div>
+      </dl>
+      <div class="dashboard-mini-list" th:if="${pastoralLeaders != null and !pastoralLeaders.empty}">
+        <div class="dashboard-mini-row" th:each="leader : ${pastoralLeaders}">
+          <span th:text="${leader.leaderName()}">Lider</span>
+          <strong data-i18n-template="dashboard.activeCasesCountShort"
+                  th:attr="data-i18n-param-count=${leader.activeCases()}">0 cazuri</strong>
+        </div>
+      </div>
+      <p class="muted" th:if="${pastoralLeaders == null or pastoralLeaders.empty}" data-i18n="dashboard.noLeadersWithActiveCases">Nu există încă lideri cu cazuri active alocate.</p>
+    </section>
+
+    <section class="card card-wide dashboard-signals-card"
+             data-expandable-panel
+             th:with="nonBirthdayRecommendations=${pastoralRecommendations == null ? null : pastoralRecommendations.?[type != 'Zi de naștere']}">
+      <div class="report-section-header">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">notifications_active</span><span data-i18n="dashboard.automaticPastoralSignals">Semnale pastorale automate</span></h2>
+          <p class="muted"
+             data-i18n-template="dashboard.activeRulesSummary"
+             th:attr="data-i18n-param-absences=${pastoralRecommendationSettings.absenceCount()},data-i18n-param-days=${pastoralRecommendationSettings.analysisDays()}">Persoane detectate automat.</p>
+        </div>
+        <div class="report-section-header-action report-section-header-action-shift">
+          <button type="button"
+                  class="icon-button report-expand-icon-button"
+                  aria-label="Extinde"
+                  data-i18n-aria-label="reports.expandSection"
+                  data-expand-toggle>
+            <img th:src="@{/img/extend.svg}" src="/img/extend.svg" class="report-expand-svg report-expand-svg-open" alt="" aria-hidden="true" />
+            <img th:src="@{/img/close.svg}" src="/img/close.svg" class="report-expand-svg report-expand-svg-close" alt="" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div class="report-expand-content report-expand-content-10-lines" data-expand-content>
+        <div class="section-heading compact-head">
+          <div></div>
+          <a th:href="@{/follow-ups}" class="link" data-i18n="dashboard.viewFollowUps">Vezi follow-up-uri</a>
+        </div>
+        <div class="dashboard-signals-overview">
+          <div class="dashboard-signals-chip">
+            <span data-i18n="dashboard.active">Active</span>
+            <strong th:text="${nonBirthdayRecommendations != null ? nonBirthdayRecommendations.size() : 0}">0</strong>
+          </div>
+          <div class="dashboard-signals-chip">
+            <span data-i18n="dashboard.hidden">Ascunse</span>
+            <strong th:text="${hiddenPastoralRecommendations != null ? hiddenPastoralRecommendations.size() : 0}">0</strong>
+          </div>
+          <div class="dashboard-signals-chip">
+            <span data-i18n="dashboard.analysisWindow">Fereastră analiză</span>
+            <strong data-i18n-template="dashboard.daysCount"
+                    th:attr="data-i18n-param-count=${pastoralRecommendationSettings.analysisDays()}">90 zile</strong>
+          </div>
+        </div>
+
+        <div class="table-scroll" th:if="${nonBirthdayRecommendations != null and !nonBirthdayRecommendations.empty}">
+          <table class="stripe dashboard-signals-table">
+            <thead>
+            <tr>
+              <th data-i18n="dashboard.type">Tip</th>
+              <th data-i18n="persons.title">Persoană</th>
+              <th data-i18n="dashboard.reason">Motiv</th>
+              <th class="actions">Acțiuni</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="rec : ${nonBirthdayRecommendations}">
+              <td>
+                <span class="recommendation-type" th:text="${rec.type()}">Tip</span>
+              </td>
+              <td>
+                <a th:href="${rec.personHref()}" class="plain-link" th:text="${rec.personName()}">Persoană</a>
+              </td>
+              <td th:text="${rec.detail()}">Motiv</td>
+              <td class="actions">
+                <a th:href="${rec.actionHref()}" class="icon-button dashboard-action-icon"
+                   th:attr="aria-label=${rec.actionLabel()},title=${rec.actionLabel()}">
+                  <span class="material-icons" aria-hidden="true">open_in_new</span>
+                </a>
+                <a th:if="${rec.followUpHref() != null and rec.followUpHref() != rec.actionHref()}"
+                   th:href="${rec.followUpHref()}"
+                   class="icon-button dashboard-action-icon"
+                   aria-label="Creează follow-up"
+                   title="Creează follow-up"
+                   data-i18n-aria-label="dashboard.createFollowUp"
+                   data-i18n-title="dashboard.createFollowUp">
+                  <span class="material-icons" aria-hidden="true">add_task</span>
+                </a>
+                <form method="post" th:action="@{/dashboard/recommendations/dismiss}" class="inline-form">
+                  <input type="hidden" name="personId" th:value="${rec.personId()}" />
+                  <input type="hidden" name="type" th:value="${rec.type()}" />
+                  <input type="hidden" name="mode" value="snooze" />
+                  <button type="submit" class="icon-button dashboard-action-icon" aria-label="Amână 7 zile" title="Amână 7 zile"
+                          data-i18n-aria-label="dashboard.snooze7Days" data-i18n-title="dashboard.snooze7Days">
+                    <span class="material-icons" aria-hidden="true">schedule</span>
+                  </button>
+                </form>
+                <form method="post" th:action="@{/dashboard/recommendations/dismiss}" class="inline-form">
+                  <input type="hidden" name="personId" th:value="${rec.personId()}" />
+                  <input type="hidden" name="type" th:value="${rec.type()}" />
+                  <input type="hidden" name="mode" value="done" />
+                  <button type="submit" class="icon-button dashboard-action-icon" aria-label="Tratat" title="Tratat"
+                          data-i18n-aria-label="dashboard.markHandled" data-i18n-title="dashboard.markHandled">
+                    <span class="material-icons" aria-hidden="true">done</span>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" th:if="${nonBirthdayRecommendations == null or nonBirthdayRecommendations.empty}" data-i18n="dashboard.noAutomaticRecommendations">Nu există recomandări automate în acest moment.</p>
+      </div>
+    </section>
+
+    <section class="card card-wide" th:if="${hiddenPastoralRecommendations != null and !hiddenPastoralRecommendations.empty}">
+      <div class="section-heading">
+        <div>
+          <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">visibility_off</span><span data-i18n="dashboard.hiddenRecommendations">Recomandări ascunse</span></h2>
+          <p class="muted" data-i18n="dashboard.hiddenRecommendationsHint">Ultimele recomandări amânate sau marcate ca tratate.</p>
+        </div>
+      </div>
+      <div class="dashboard-mini-list">
+        <div class="dashboard-mini-row dashboard-recommendation-row" th:each="item : ${hiddenPastoralRecommendations}">
+          <div>
+            <span class="recommendation-type" th:text="${item.type()}">Tip</span>
+            <a th:href="${item.personHref()}" class="plain-link" th:text="${item.personName()}">Persoană</a>
+            <span th:text="${item.dismissedUntilLabel()}">Status</span>
+          </div>
+          <div class="recommendation-actions">
+            <form method="post" th:action="@{/dashboard/recommendations/restore}" class="inline-form">
+              <input type="hidden" name="dismissalId" th:value="${item.id()}" />
+              <button type="submit" class="icon-button dashboard-action-icon" aria-label="Reactivează" title="Reactivează"
+                      data-i18n-aria-label="dashboard.reactivate" data-i18n-title="dashboard.reactivate">
+                <span class="material-icons" aria-hidden="true">restart_alt</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card-wide dashboard-inbox-collapsible-card">
+      <details class="dashboard-collapsible">
+        <summary class="dashboard-collapsible-summary">
+          <div>
+            <h2 class="dashboard-card-title"><span class="material-icons" aria-hidden="true">inbox</span><span data-i18n="dashboard.dailyPastoralInbox">Inbox pastoral zilnic</span></h2>
+            <p class="muted" data-i18n="dashboard.dailyPastoralInboxHint">Top cazuri prioritizate automat, cu motiv și acțiune imediată.</p>
+          </div>
+          <span class="material-icons dashboard-collapsible-icon" aria-hidden="true">expand_more</span>
+        </summary>
+        <div class="dashboard-collapsible-body">
+          <div class="section-heading compact-head">
+            <div></div>
+            <a th:href="@{/follow-ups}" class="link" data-i18n="dashboard.openAllCases">Deschide toate cazurile</a>
+          </div>
+          <div class="dashboard-mini-list" th:if="${pastoralInbox != null and !pastoralInbox.empty}">
+            <div class="dashboard-mini-row dashboard-inbox-row" th:each="item : ${pastoralInbox}">
+              <div>
+                <span class="recommendation-type" th:text="${item.caseType()}">Tip</span>
+                <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link" th:text="${item.personName()}">Persoană</a>
+                <span th:text="${item.reason()}">Motiv</span>
+                <span class="muted" data-i18n-template="dashboard.inboxStageRisk"
+                      th:attr="data-i18n-param-stage=${item.workflowStage()},data-i18n-param-riskLevel=${item.riskLevel()},data-i18n-param-riskScore=${item.riskScore()}">Stadiu</span>
+              </div>
+              <div class="recommendation-actions">
+                <a th:href="${item.nextActionHref()}" class="icon-button dashboard-action-icon"
+                   th:attr="aria-label=${item.nextActionLabel()},title=${item.nextActionLabel()}">
+                  <span class="material-icons" aria-hidden="true">open_in_new</span>
+                </a>
+                <form method="post" th:action="@{/dashboard/inbox/check-in}" class="inline-form" th:if="${item.followUpId() != null}">
+                  <input type="hidden" name="followUpId" th:value="${item.followUpId()}" />
+                  <input type="hidden" name="status" value="IN_PROGRESS" />
+                  <input type="hidden" name="redirect" value="/dashboard" />
+                  <button type="submit" class="icon-button dashboard-action-icon" aria-label="Check-in rapid" title="Check-in rapid"
+                          data-i18n-aria-label="dashboard.quickCheckIn" data-i18n-title="dashboard.quickCheckIn">
+                    <span class="material-icons" aria-hidden="true">history_toggle_off</span>
+                  </button>
+                </form>
+                <form method="post" th:action="@{/dashboard/inbox/check-in}" class="inline-form" th:if="${item.followUpId() != null}">
+                  <input type="hidden" name="followUpId" th:value="${item.followUpId()}" />
+                  <input type="hidden" name="status" value="DONE" />
+                  <input type="hidden" name="redirect" value="/dashboard" />
+                  <button type="submit" class="icon-button dashboard-action-icon" aria-label="Rezolvat" title="Rezolvat"
+                          data-i18n-aria-label="dashboard.resolved" data-i18n-title="dashboard.resolved">
+                    <span class="material-icons" aria-hidden="true">task_alt</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <p class="muted" th:if="${pastoralInbox == null or pastoralInbox.empty}" data-i18n="dashboard.noUrgentInboxCasesToday">Nu există cazuri urgente în inbox azi.</p>
+        </div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var card = document.querySelector('[data-birthdays-card]');
+    if (!card) return;
+    var href = card.getAttribute('data-href') || '/birthdays';
+    card.addEventListener('click', function (event) {
+      var interactive = event.target.closest('a, button, input, select, textarea, label, form');
+      if (interactive) return;
+      window.location.href = href;
+    });
+  })();
+</script>
+</body>
+</html>

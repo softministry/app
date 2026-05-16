@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + (eventDto.id != null ? 'Editează eveniment' : 'Adaugă eveniment')}">Formular</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <script defer th:src="@{/js/events-ui.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${eventDto.id != null ? 'Editează eveniment' : 'Adaugă eveniment'}"
+          th:attr="data-i18n=${eventDto.id != null ? 'events.edit_title' : 'events.add_title'}"></h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/events}" class="header-action-icon" aria-label="Înapoi" title="Înapoi" data-i18n-aria-label="actions.back" data-i18n-title="actions.back">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+      <select th:replace="~{fragments/layout :: languageSelect}"></select>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form th:object="${eventDto}"
+        th:action="${eventDto.id != null} ? @{/events/{id}(id=${eventDto.id})} : @{/events}"
+        method="post" class="event-form event-editor-form">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+    <div class="event-editor-layout" th:classappend="${eventDto.id == null} ? ' event-editor-layout-create' : ' event-editor-layout-edit'">
+      <main class="event-editor-main">
+        <section class="card event-editor-card">
+          <section class="form-grid event-primary-grid event-editor-grid-main">
+            <label class="field-name">
+              <span class="field-label-required">
+                <span data-i18n="events.name">Nume eveniment</span>
+                <span class="required-marker" aria-hidden="true">*</span>
+              </span>
+              <input type="text" th:field="*{eventName}" placeholder="Ex: Adunarea de duminică" required />
+              <small class="field-error" th:if="${eventFieldErrors != null and eventFieldErrors.containsKey('eventName')}"
+                     th:text="${eventFieldErrors.get('eventName')}">Numele evenimentului este obligatoriu.</small>
+            </label>
+            <label class="field-priority field-priority-top">
+              <span data-i18n="events.priority">Prioritate</span>
+              <select th:field="*{priority}">
+                <option value="">---</option>
+                <option th:each="priority : ${priorities}" th:value="${priority}" th:text="${@uiLabels.priority(priority)}"
+                        th:attr="data-i18n=${'priority.' + priority.value}"></option>
+              </select>
+            </label>
+            <label class="field-status">
+              <span data-i18n="events.status">Status</span>
+              <select th:field="*{status}">
+                <option value="">---</option>
+                <option th:each="status : ${eventStatuses}" th:value="${status}" th:text="${@uiLabels.eventStatus(status)}"
+                        th:attr="data-i18n=${'events.status_' + #strings.toLowerCase(status.toString())}"></option>
+              </select>
+            </label>
+            <label class="field-type">
+              <span data-i18n="events.type">Tip</span>
+              <select th:field="*{eventType}">
+                <option value="">---</option>
+                <option th:each="type : ${eventTypes}" th:value="${type}" th:text="${@uiLabels.eventType(type)}"
+                        th:attr="data-i18n=${'eventType.' + type.name()}"></option>
+              </select>
+            </label>
+            <label class="field-about field-about-top">
+              <span data-i18n="events.about">Despre</span>
+              <textarea th:field="*{about}" rows="4" placeholder="Scop, context, informații pentru echipă"></textarea>
+            </label>
+          </section>
+
+          <section class="form-grid event-secondary-grid event-editor-grid-main">
+            <label class="field-date">
+              <span class="field-label-required">
+                <span>Data</span>
+                <span class="required-marker" aria-hidden="true">*</span>
+              </span>
+              <input type="date" id="openDate" name="openDate"
+                     th:value="${eventDto.openDate != null ? #temporals.format(eventDto.openDate, 'yyyy-MM-dd') : ''}" required />
+            </label>
+            <label class="field-implemented-by">
+              <span th:class="${eventDto.id == null} ? 'field-label-required' : null">
+                <span data-i18n="events.implemented_by">Responsabil</span>
+                <span th:if="${eventDto.id == null}" class="required-marker" aria-hidden="true">*</span>
+              </span>
+              <div class="autocomplete" data-person-autocomplete
+                   th:attr="data-initial-id=${eventDto.implementedBy != null ? eventDto.implementedBy.id : ''},
+                            data-initial-name=${eventDto.implementedBy != null ? eventDto.implementedBy.fullName : ''},
+                            data-required=${eventDto.id == null}">
+                <input type="text"
+                       class="autocomplete-input"
+                       placeholder="Caută după nume..."
+                       autocomplete="off"
+                       th:required="${eventDto.id == null}"
+                       data-autocomplete-input />
+                <input type="hidden"
+                       name="implementedById"
+                       th:value="${eventDto.implementedBy != null ? eventDto.implementedBy.id : ''}"
+                       data-autocomplete-hidden />
+                <div class="autocomplete-list" hidden data-autocomplete-list></div>
+              </div>
+              <small class="field-error" th:if="${eventFieldErrors != null and eventFieldErrors.containsKey('implementedById')}"
+                     th:text="${eventFieldErrors.get('implementedById')}">Responsabil invalid.</small>
+            </label>
+            <label class="field-group">
+              <span>Grup / slujire</span>
+              <select th:field="*{groupId}">
+                <option value="">---</option>
+                <option th:each="group : ${groups}"
+                        th:value="${group.id}"
+                        th:text="${group.name + ' · ' + @uiLabels.groupType(group.type)}"></option>
+              </select>
+            </label>
+          </section>
+        </section>
+      </main>
+
+      <aside class="event-editor-side">
+        <section class="card event-editor-card event-editor-side-card">
+          <div class="section-head">
+            <div>
+              <h2>Remainder</h2>
+            </div>
+          </div>
+
+          <section class="form-grid recurrence-grid event-editor-side-grid">
+            <label>
+              <span class="hint" data-i18n="events.recurrence_hint">Lasă `NONE` dacă evenimentul nu se repetă.</span>
+              <select th:field="*{recurrenceType}">
+                <option value="">---</option>
+                <option th:each="item : ${recurrenceTypes}" th:value="${item}" th:text="${@uiLabels.recurrenceType(item)}"
+                        th:attr="data-i18n=${'events.recurrence_' + #strings.toLowerCase(item.name())}"></option>
+              </select>
+            </label>
+            <label>
+              <span>Până la</span>
+              <input type="date" id="recurrenceUntil" name="recurrenceUntil"
+                     th:value="${eventDto.recurrenceUntil != null ? #temporals.format(eventDto.recurrenceUntil, 'yyyy-MM-dd') : ''}" />
+              <small class="field-error" th:if="${eventFieldErrors != null and eventFieldErrors.containsKey('recurrenceUntil')}"
+                     th:text="${eventFieldErrors.get('recurrenceUntil')}">Dată invalidă.</small>
+            </label>
+            <label class="checkbox-row reminder-row event-editor-reminder">
+              <input type="checkbox" th:field="*{frontReminderEnabled}" />
+              <span class="reminder-inline">
+                Reminder cu
+                <input type="number" min="0" th:field="*{frontReminderDaysBefore}" />
+                zile înainte
+              </span>
+              <small class="field-error" th:if="${eventFieldErrors != null and eventFieldErrors.containsKey('frontReminderDaysBefore')}"
+                     th:text="${eventFieldErrors.get('frontReminderDaysBefore')}">Număr invalid.</small>
+            </label>
+          </section>
+
+          <div class="form-actions event-editor-actions">
+            <button type="submit" class="button primary" th:text="${eventDto.id != null ? 'Actualizează' : 'Salvează'}" data-i18n="actions.save"></button>
+            <a th:href="@{/events}" class="link-button" data-i18n="actions.cancel">Anulează</a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </form>
+
+  <details class="card section-gap" th:if="${eventDto.id != null}">
+    <summary class="section-head">
+      <div>
+        <p class="eyebrow">Eveniment</p>
+        <h2>Task-uri asociate</h2>
+      </div>
+    </summary>
+
+    <div class="task-stack" th:if="${tasks != null and !tasks.empty}">
+      <form th:each="task : ${tasks}" class="task-card" method="post"
+            th:action="@{/events/{id}/tasks/{taskId}(id=${eventDto.id},taskId=${task.id})}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <div class="task-grid">
+          <label>
+            <span>Titlu</span>
+            <input type="text" name="title" th:value="${task.title}" required />
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status">
+              <option th:each="item : ${taskStatuses}" th:value="${item}" th:text="${@uiLabels.taskStatus(item)}"
+                      th:attr="data-i18n=${'events.task_status_' + #strings.toLowerCase(item)}"
+                      th:selected="${task.status == item}"></option>
+            </select>
+          </label>
+          <label>
+            <span>Termen</span>
+            <input type="date" name="dueDate"
+                   th:value="${task.dueDate != null ? #temporals.format(task.dueDate, 'yyyy-MM-dd') : ''}" />
+          </label>
+          <label>
+            <span>Responsabil</span>
+            <select name="assignedToId">
+              <option value="">---</option>
+              <option th:each="person : ${persons}" th:value="${person.id}" th:text="${person.fullName}"
+                      th:selected="${task.assignedTo != null and task.assignedTo.id == person.id}"></option>
+            </select>
+          </label>
+          <label>
+            <span>Ordine</span>
+            <input type="number" name="orderIndex" min="0" th:value="${task.orderIndex}" />
+          </label>
+          <label class="task-notes">
+            <span>Notițe</span>
+            <textarea name="notes" rows="2" th:text="${task.notes}"></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="button primary">Salvează task</button>
+          <button type="submit" class="link danger ghost-button"
+                  th:formaction="@{/events/{id}/tasks/{taskId}/delete(id=${eventDto.id},taskId=${task.id})}">
+            Șterge
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p class="muted" th:if="${tasks == null or tasks.empty}">Nu există task-uri pentru acest eveniment.</p>
+
+    <form class="task-card task-card-new" method="post" th:action="@{/events/{id}/tasks(id=${eventDto.id})}">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <div class="section-head compact-head">
+        <h3>Adaugă task</h3>
+      </div>
+      <div class="task-grid">
+        <label>
+          <span>Titlu</span>
+          <input type="text" name="title" placeholder="Ex: Confirmă voluntarii" required />
+        </label>
+        <label>
+          <span>Status</span>
+          <select name="status">
+            <option th:each="item : ${taskStatuses}" th:value="${item}" th:text="${@uiLabels.taskStatus(item)}"
+                    th:attr="data-i18n=${'events.task_status_' + #strings.toLowerCase(item)}"
+                    th:selected="${item == 'TODO'}"></option>
+          </select>
+        </label>
+        <label>
+          <span>Termen</span>
+          <input type="date" name="dueDate" />
+        </label>
+        <label>
+          <span>Responsabil</span>
+          <select name="assignedToId">
+            <option value="">---</option>
+            <option th:each="person : ${persons}" th:value="${person.id}" th:text="${person.fullName}"></option>
+          </select>
+        </label>
+        <label>
+          <span>Ordine</span>
+          <input type="number" name="orderIndex" min="0" value="0" />
+        </label>
+        <label class="task-notes">
+          <span>Notițe</span>
+          <textarea name="notes" rows="2" placeholder="Detalii utile"></textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button primary">Adaugă task</button>
+      </div>
+    </form>
+  </details>
+</div>
+<script id="event-persons-data" type="application/json" th:inline="javascript">
+  [[${persons}]]
+</script>
+</body>
+</html>

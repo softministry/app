@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Zile de naștere'}">Zile de naștere</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 data-i18n="dashboard.birthdays">Zile de naștere</h1>
+      <p class="muted" data-i18n="dashboard.birthdaysHint">Persoane care își sărbătoresc ziua de naștere în perioada configurată.</p>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/dashboard}" class="header-action-icon" aria-label="Înapoi la dashboard" title="Înapoi la dashboard">
+        <span class="material-icons" aria-hidden="true">arrow_back</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section class="card dashboard-panel-card dashboard-birthdays-card">
+    <div class="table-scroll" th:if="${headerBirthdayNotifications != null and !headerBirthdayNotifications.empty}">
+      <table class="stripe birthdays-table">
+        <colgroup>
+          <col class="col-person" />
+          <col class="col-birthdate" />
+          <col class="col-address" />
+          <col class="col-phone" />
+          <col class="col-when" />
+          <col class="col-actions" />
+        </colgroup>
+        <thead>
+        <tr>
+          <th>Persoană</th>
+          <th>Data nașterii</th>
+          <th>Adresă</th>
+          <th>Telefon</th>
+          <th>Când</th>
+          <th class="actions">Acțiuni</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${headerBirthdayNotifications}">
+          <td><a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link" th:text="${item.personName()}">Persoană</a></td>
+          <td th:text="${item.birthDateLabel()}">01 ianuarie</td>
+          <td th:text="${item.address()}">—</td>
+          <td th:text="${item.phone()}">—</td>
+          <td>
+            <span th:if="${item.daysUntil() == 0}" data-i18n-template="dashboard.birthdayWhenToday"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()}">24-04 · Azi</span>
+            <span th:if="${item.daysUntil() == 1}" data-i18n-template="dashboard.birthdayWhenTomorrow"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()}">24-04 · Mâine</span>
+            <span th:if="${item.daysUntil() > 1}" data-i18n-template="dashboard.birthdayWhenInDays"
+                  th:attr="data-i18n-param-date=${item.birthDateLabel()},data-i18n-param-days=${item.daysUntil()}">24-04 · În 14 zile</span>
+          </td>
+          <td class="actions">
+            <form th:action="@{/notifications/birthdays/action}" method="post" class="inline-form">
+              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="hidden" name="personId" th:value="${item.personId()}" />
+              <input type="hidden" name="mode" value="snooze" />
+              <input type="hidden" name="redirect" value="/birthdays" />
+              <button type="submit" class="icon-button dashboard-action-icon" aria-label="Amână" title="Amână"
+                      data-i18n-aria-label="dashboard.snooze" data-i18n-title="dashboard.snooze">
+                <span class="material-icons" aria-hidden="true">schedule</span>
+              </button>
+            </form>
+            <form th:action="@{/notifications/birthdays/action}" method="post" class="inline-form">
+              <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="hidden" name="personId" th:value="${item.personId()}" />
+              <input type="hidden" name="mode" value="done" />
+              <input type="hidden" name="redirect" value="/birthdays" />
+              <button type="submit" class="icon-button dashboard-action-icon" aria-label="Tratat" title="Tratat"
+                      data-i18n-aria-label="dashboard.markHandled" data-i18n-title="dashboard.markHandled">
+                <span class="material-icons" aria-hidden="true">done</span>
+              </button>
+            </form>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="dashboard-birthday-empty-line" th:if="${headerBirthdayNotifications == null or headerBirthdayNotifications.empty}">
+      <span class="material-icons" aria-hidden="true">event_busy</span>
+      <span data-i18n="dashboard.noBirthdaysInPeriod">Nu există zile de naștere în această perioadă.</span>
+    </div>
+  </section>
+</div>
+</body>
+</html>

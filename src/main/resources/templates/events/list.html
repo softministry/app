@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Evenimente'}">Evenimente</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+  <script defer th:src="@{/js/events-ui.js}"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 data-i18n="menu.events">Evenimente</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/events/move}" class="header-action-icon" aria-label="Mută eveniment" title="Mută eveniment">
+        <span class="material-icons" aria-hidden="true">swap_horiz</span>
+      </a>
+      <a th:href="@{/events/new}" class="button primary header-action-icon" aria-label="Adaugă eveniment" title="Adaugă eveniment" data-i18n-aria-label="events.add_title" data-i18n-title="events.add_title">
+        <span class="material-icons" aria-hidden="true">add</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+      <select th:replace="~{fragments/layout :: languageSelect}"></select>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <form method="get" th:action="@{/events}" class="toolbar" data-events-filter-form>
+    <input type="hidden" name="page" value="1" />
+    <input type="hidden" name="sort" th:value="${sort}" />
+    <label class="toolbar-item">
+      <span data-i18n="search.label">Caută</span>
+      <input type="text" name="q" th:value="${q}" placeholder="Nume, descriere, responsabil..." data-i18n-placeholder="search.placeholder" />
+    </label>
+    <label class="toolbar-item">
+      <span data-i18n="events.status">Status</span>
+      <select name="status" data-events-auto-submit>
+        <option value="" data-i18n="memberType.ALL">Toate</option>
+        <option th:each="item : ${eventStatuses}" th:value="${item}" th:text="${@uiLabels.eventStatus(item)}"
+                th:attr="data-i18n=${'events.status_' + #strings.toLowerCase(item.toString())}"
+                th:selected="${status != null and status == item.name()}"></option>
+      </select>
+    </label>
+    <label class="toolbar-item">
+      <span data-i18n="events.type">Tip</span>
+      <select name="eventType" data-events-auto-submit>
+        <option value="" data-i18n="memberType.ALL">Toate</option>
+        <option th:each="item : ${eventTypes}" th:value="${item}" th:text="${@uiLabels.eventType(item)}"
+                th:attr="data-i18n=${'eventType.' + item.name()}"
+                th:selected="${eventType != null and eventType == item.name()}"></option>
+      </select>
+    </label>
+    <label class="toolbar-item">
+      <span>Grup</span>
+      <select name="groupId" data-events-auto-submit>
+        <option value="" data-i18n="memberType.ALL">Toate</option>
+        <option th:each="group : ${groups}"
+                th:value="${group.id}"
+                th:text="${group.name + ' · ' + @uiLabels.groupType(group.type)}"
+                th:selected="${groupId != null and group.id == groupId}"></option>
+      </select>
+    </label>
+    <div class="toolbar-actions">
+      <a th:href="@{/events}" class="icon-button" aria-label="Resetează filtre">
+        <span class="material-icons" aria-hidden="true">restart_alt</span>
+      </a>
+    </div>
+  </form>
+
+  <section data-events-results th:fragment="resultsSection">
+  <div class="table-scroll" th:classappend="${scrollOnly} ? ' table-scroll-contained' : ''">
+  <table class="stripe events-table" data-events-visuals>
+    <colgroup>
+      <col class="col-number" />
+      <col class="col-event" />
+      <col class="col-status" />
+      <col class="col-priority" />
+      <col class="col-group" />
+      <col class="col-owner" />
+      <col class="col-period" />
+      <col class="col-actions" />
+    </colgroup>
+    <thead>
+    <tr>
+      <th>#</th>
+      <th>
+        <a class="sort-header"
+           th:classappend="${sort == 'nameAsc' or sort == 'nameDesc'} ? ' is-active'"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'nameAsc' ? 'nameDesc' : 'nameAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           data-partial-link
+           data-partial-endpoint="/events/results"
+           data-partial-target="[data-events-results]">
+          <span>Eveniment</span>
+          <span class="material-icons" aria-hidden="true"
+                th:text="${sort == 'nameAsc' ? 'arrow_upward' : (sort == 'nameDesc' ? 'arrow_downward' : 'unfold_more')}">unfold_more</span>
+        </a>
+      </th>
+      <th>
+        <a class="sort-header"
+           th:classappend="${sort == 'statusAsc' or sort == 'statusDesc'} ? ' is-active'"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'statusAsc' ? 'statusDesc' : 'statusAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           data-partial-link
+           data-partial-endpoint="/events/results"
+           data-partial-target="[data-events-results]">
+          <span data-i18n="events.status">Status</span>
+          <span class="material-icons" aria-hidden="true"
+                th:text="${sort == 'statusAsc' ? 'arrow_upward' : (sort == 'statusDesc' ? 'arrow_downward' : 'unfold_more')}">unfold_more</span>
+        </a>
+      </th>
+      <th>
+        <a class="sort-header"
+           th:classappend="${sort == 'priorityAsc' or sort == 'priorityDesc'} ? ' is-active'"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'priorityAsc' ? 'priorityDesc' : 'priorityAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           data-partial-link
+           data-partial-endpoint="/events/results"
+           data-partial-target="[data-events-results]">
+          <span data-i18n="events.priority">Prioritate</span>
+          <span class="material-icons" aria-hidden="true"
+                th:text="${sort == 'priorityAsc' ? 'arrow_upward' : (sort == 'priorityDesc' ? 'arrow_downward' : 'unfold_more')}">unfold_more</span>
+        </a>
+      </th>
+      <th>Grup</th>
+      <th class="owner-column" data-i18n="events.implemented_by">Responsabil</th>
+      <th class="period-column">
+        <a class="sort-header"
+           th:classappend="${sort == 'openDateAsc' or sort == 'openDateDesc'} ? ' is-active'"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'openDateAsc' ? 'openDateDesc' : 'openDateAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           data-partial-link
+           data-partial-endpoint="/events/results"
+           data-partial-target="[data-events-results]">
+          <span>Perioadă</span>
+          <span class="material-icons" aria-hidden="true"
+                th:text="${sort == 'openDateAsc' ? 'arrow_upward' : (sort == 'openDateDesc' ? 'arrow_downward' : 'unfold_more')}">unfold_more</span>
+        </a>
+      </th>
+      <th class="actions" data-i18n="actions_label">Acțiuni</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="event, stat : ${events}">
+      <td class="event-number-cell">
+        <span class="row-number" th:text="${stat.count + '.'}">1.</span>
+      </td>
+      <td class="visual-cell">
+        <strong class="event-name" th:text="${event.eventName}">Nume</strong>
+        <p class="muted compact" th:if="${event.recurrenceType != null and event.recurrenceType != 'NONE'}">
+          <span data-i18n="events.recurrenceLabel">Recurență:</span>
+          <span th:text="${@uiLabels.recurrenceType(event.recurrenceType)}"></span>
+          <span th:if="${event.recurrenceInterval != null}" th:text="${' / ' + event.recurrenceInterval}"></span>
+          <span th:if="${event.recurrenceUntil != null}" th:text="${' până la ' + event.recurrenceUntil}"></span>
+        </p>
+      </td>
+      <td class="visual-cell">
+        <span class="status-pill"
+              th:attr="data-status=${event.status},data-i18n=${event.status != null ? 'events.status_' + #strings.toLowerCase(event.status.toString()) : null}"
+              th:text="${@uiLabels.eventStatus(event.status)}"></span>
+      </td>
+      <td class="visual-cell">
+        <span class="priority-pill"
+              th:attr="data-priority=${event.priority},data-i18n=${event.priority != null ? 'priority.' + event.priority.value : null}"
+              th:text="${@uiLabels.priority(event.priority)}"></span>
+      </td>
+      <td>
+        <a th:if="${event.groupId != null}" th:href="@{'/groups/' + ${event.groupId}}" class="link truncate-single"
+           th:title="${event.groupName}"
+           th:text="${event.groupName}">Grup</a>
+        <span th:if="${event.groupId == null}" class="muted">—</span>
+      </td>
+      <td class="owner-column">
+        <span class="truncate-single"
+              th:title="${event.implementedBy != null ? event.implementedBy.fullName : '—'}"
+              th:text="${event.implementedBy != null ? event.implementedBy.fullName : '—'}"></span>
+      </td>
+      <td class="period-column">
+        <div class="truncate-single js-period-range"
+             th:attr="data-start=${event.endDate}"
+             th:title="${event.endDate != null ? #temporals.format(event.endDate, 'dd-MM-yyyy') : '—'}">
+          <span th:text="${event.endDate != null ? #temporals.format(event.endDate, 'dd-MM-yyyy') : '—'}"></span>
+        </div>
+        <p class="muted compact" th:if="${event.frontReminderEnabled}">
+          <span data-i18n-template="events.frontReminderDaysBefore"
+                th:attr="data-i18n-param-days=${event.frontReminderDaysBefore}">Reminder: 0 zile înainte</span>
+        </p>
+      </td>
+      <td class="actions">
+        <a th:href="@{'/events/' + ${event.id} + '/edit'}" class="icon-button" aria-label="Editează" data-i18n-aria-label="actions.edit">
+          <span class="material-icons" aria-hidden="true">edit</span>
+        </a>
+        <form th:action="@{'/events/' + ${event.id} + '/delete'}" method="post" class="inline-form" data-event-delete-form>
+          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+          <button type="submit" class="icon-button icon-button-danger" aria-label="Șterge" data-i18n-aria-label="actions.delete">
+            <span class="material-icons" aria-hidden="true">delete</span>
+          </button>
+        </form>
+      </td>
+    </tr>
+    <tr th:if="${events.empty}">
+      <td colspan="8" class="muted">Nu există evenimente pentru moment.</td>
+    </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="pagination-bar">
+    <a class="link-button" th:if="${!scrollOnly and page > 1}"
+       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size},scrollOnly=${scrollOnly},page=${page - 1})}"
+       data-partial-link
+       data-partial-endpoint="/events/results"
+       data-partial-target="[data-events-results]">Anterior</a>
+    <span class="pagination-info"
+          th:if="${scrollOnly}"
+          data-i18n-template="events.paginationInfoScrollOnly"
+          th:attr="data-i18n-param-totalItems=${totalItems}"></span>
+    <span class="pagination-info"
+          th:unless="${scrollOnly}"
+          data-i18n-template="events.paginationInfoPaged"
+          th:attr="data-i18n-param-page=${page},data-i18n-param-totalPages=${totalPages},data-i18n-param-totalItems=${totalItems}"></span>
+    <a class="link-button" th:if="${!scrollOnly and page < totalPages}"
+       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size},scrollOnly=${scrollOnly},page=${page + 1})}"
+       data-partial-link
+       data-partial-endpoint="/events/results"
+       data-partial-target="[data-events-results]">Următor</a>
+    <form method="get"
+          th:action="@{/events}"
+          class="pagination-controls"
+          data-partial-pagination-form
+          data-partial-endpoint="/events/results"
+          data-partial-target="[data-events-results]">
+      <input type="hidden" name="q" th:value="${q}" />
+      <input type="hidden" name="status" th:value="${status}" />
+      <input type="hidden" name="eventType" th:value="${eventType}" />
+      <input type="hidden" name="groupId" th:value="${groupId}" />
+      <input type="hidden" name="sort" th:value="${sort}" />
+      <input type="hidden" name="page" value="1" />
+      <select name="size" onchange="this.form.submit()" aria-label="Număr rânduri">
+        <option th:each="pageSize : ${pageSizes}" th:value="${pageSize}" th:text="${pageSize}" th:selected="${size == pageSize}"></option>
+      </select>
+      <label class="checkbox-inline">
+        <input type="checkbox" name="scrollOnly" value="true" th:checked="${scrollOnly}" onchange="this.form.submit()" />
+        <span>Scroll only</span>
+      </label>
+    </form>
+  </div>
+  </section>
+</div>
+</body>
+</html>

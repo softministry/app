@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Calendar evenimente'}">Calendar evenimente</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell calendar-page">
+  <header class="page-header">
+    <div>
+      <h1 data-i18n="calendar.title">Calendar</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <a th:href="@{/events/new}" class="button primary header-action-icon" aria-label="Adaugă eveniment" title="Adaugă eveniment" data-i18n-aria-label="calendar.addEvent" data-i18n-title="calendar.addEvent">
+        <span class="material-icons" aria-hidden="true">add</span>
+      </a>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section class="calendar-toolbar">
+    <div class="calendar-nav">
+      <a class="link-button" th:href="@{/calendar(year=${prevYear},month=${prevMonth})}" data-i18n="calendar.prevMonth">Luna anterioară</a>
+      <h2 th:text="${monthLabel}">Aprilie 2026</h2>
+      <a class="link-button" th:href="@{/calendar(year=${nextYear},month=${nextMonth})}" data-i18n="calendar.nextMonth">Luna următoare</a>
+    </div>
+    <a class="button ghost" th:href="@{|/calendar?year=${todayYear}&month=${todayMonth}#today-cell|}" data-i18n="calendar.today">Astăzi</a>
+  </section>
+
+  <section class="calendar-grid">
+    <div class="calendar-weekday" data-i18n="calendar.weekdayMon">Luni</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdayTue">Marți</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdayWed">Miercuri</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdayThu">Joi</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdayFri">Vineri</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdaySat">Sâmbătă</div>
+    <div class="calendar-weekday" data-i18n="calendar.weekdaySun">Duminică</div>
+
+    <th:block th:each="week : ${weeks}">
+      <article th:each="day : ${week.days}"
+               class="calendar-cell"
+               th:classappend="${day.inCurrentMonth} ? '' : ' is-outside'"
+               th:attr="id=${day.today} ? 'today-cell' : null, data-create-url=@{/events/new(openDate=${day.date})}">
+        <header class="calendar-cell-header">
+          <span class="calendar-day-number" th:classappend="${day.today} ? ' is-today' : ''"
+                th:text="${#temporals.day(day.date)}">1</span>
+        </header>
+        <div class="calendar-events">
+          <a th:each="occurrence : ${day.events}"
+             th:href="@{'/events/' + ${occurrence.event.id} + '/edit'}"
+             class="calendar-event-card"
+             th:classappend="${occurrence.event.priority != null} ? ' priority-' + ${#strings.toLowerCase(occurrence.event.priority)} : ''"
+             th:title="${occurrence.event.eventName + (occurrence.event.implementedBy != null ? ' • ' + occurrence.event.implementedBy.fullName : '')}">
+            <strong th:text="${occurrence.event.eventName}">Eveniment</strong>
+            <span th:text="${occurrence.event.implementedBy != null ? occurrence.event.implementedBy.fullName : 'Fără responsabil'}">Responsabil</span>
+          </a>
+        </div>
+      </article>
+    </th:block>
+  </section>
+</div>
+<script>
+  (function () {
+    if (window.location.hash === '#today-cell') {
+      const todayCell = document.getElementById('today-cell');
+      if (todayCell) {
+        requestAnimationFrame(() => {
+          todayCell.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        });
+      }
+    }
+
+    const cells = document.querySelectorAll('.calendar-cell[data-create-url]');
+    cells.forEach((cell) => {
+      cell.addEventListener('click', (event) => {
+        if (event.target.closest('a.calendar-event-card')) {
+          return;
+        }
+        const createUrl = cell.getAttribute('data-create-url');
+        if (createUrl) {
+          window.location.href = createUrl;
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

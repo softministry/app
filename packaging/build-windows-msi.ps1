@@ -1,0 +1,75 @@
+Param(
+  [string]$AppName = "Church Administration Platform",
+  [string]$AppVersion = "0.1.0",
+  [string]$AppVendor = "Church Administration Platform",
+  [string]$AppDescription = "Church Administration Platform desktop app",
+  [string]$AppIdentifier = "ro.churchoffice.churchadministrationplatform"
+)
+
+$ErrorActionPreference = "Stop"
+
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RootDir = Split-Path -Parent $ScriptDir
+$TargetDir = Join-Path $RootDir "target"
+$DistDir = Join-Path $RootDir "packaging\dist"
+$PackageInputDir = Join-Path $RootDir "package-input"
+$MainJar = Join-Path $TargetDir "ministryadmin-web-$AppVersion.jar"
+$PackageJar = Join-Path $PackageInputDir "ministryadmin-web-$AppVersion.jar"
+$IconPath = Join-Path $RootDir "src\main\resources\static\img\ministryadmin-icon.ico"
+
+function Require-Command {
+  Param([string]$Name)
+  if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
+    throw "Lipseste comanda '$Name'. Instaleaza JDK 21+ (cu jpackage) si Maven."
+  }
+}
+
+Require-Command "mvn"
+Require-Command "jpackage"
+
+Write-Host "Rulez build Maven pentru a include ultimele modificari..."
+Push-Location $RootDir
+try {
+  & mvn -DskipTests package | Out-Host
+}
+finally {
+  Pop-Location
+}
+
+if (-not (Test-Path $MainJar)) {
+  throw "Jar-ul principal nu exista: $MainJar"
+}
+
+if (-not (Test-Path $IconPath)) {
+  throw "Iconita Windows nu exista: $IconPath"
+}
+
+if (Test-Path $PackageInputDir) {
+  Remove-Item -Recurse -Force $PackageInputDir
+}
+New-Item -ItemType Directory -Force -Path $PackageInputDir | Out-Null
+Copy-Item $MainJar $PackageJar
+
+New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
+
+Write-Host "Generez installer MSI..."
+& jpackage `
+  --name $AppName `
+  --type msi `
+  --dest $DistDir `
+  --input $PackageInputDir `
+  --main-jar ([System.IO.Path]::GetFileName($MainJar)) `
+  --main-class "org.springframework.boot.loader.launch.JarLauncher" `
+  --icon $IconPath `
+  --app-version $AppVersion `
+  --vendor $AppVendor `
+  --description $AppDescription `
+  --win-menu `
+  --win-shortcut `
+  --java-options "-Dserver.port=8080" `
+  --java-options "-Dfile.encoding=UTF-8"
+
+Write-Host ""
+Write-Host "MSI generat in: $DistDir"
+Get-ChildItem -Path $DistDir -Filter "*.msi" | Select-Object FullName
+

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + 'Mută eveniment'}">Mută eveniment</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1>Mută eveniment</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section th:if="${success}" class="flash flash-success" th:text="${success}"></section>
+  <section th:if="${error}" class="flash flash-error" th:text="${error}"></section>
+
+  <section class="settings-card">
+    <h2>Mută eveniment între biserici</h2>
+
+    <div th:if="${events.empty}" class="muted">Nu există evenimente disponibile în biserica activă.</div>
+
+    <form th:if="${!events.empty}" method="post" th:action="@{/events/move}" th:object="${moveForm}" class="settings-form">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+      <div class="settings-grid">
+        <label class="settings-field">
+          <span>Eveniment</span>
+          <select th:field="*{eventId}" onchange="window.location.href='/events/move?eventId=' + this.value">
+            <option th:each="event : ${events}"
+                    th:value="${event.id}"
+                    th:text="${event.eventName != null and !#strings.isEmpty(event.eventName) ? event.eventName : 'Eveniment fără nume'}"></option>
+          </select>
+        </label>
+
+        <label class="settings-field">
+          <span>Biserica țintă</span>
+          <select th:field="*{targetChurchId}">
+            <option th:each="church : ${availableTargets}"
+                    th:value="${church.id}"
+                    th:text="${church.name != null and !#strings.isEmpty(church.name) ? church.name : 'Biserică #' + church.id}"></option>
+          </select>
+        </label>
+      </div>
+
+      <div class="settings-subsection move-event-status" th:if="${currentEvent != null}">
+        <p><strong>Biserica actuală:</strong>
+          <span th:text="${currentChurchName}">Biserică</span>
+        </p>
+        <p><strong>Status:</strong>
+          <span th:if="${currentEvent.status != null}"
+                th:attr="data-i18n=${'events.status_' + #strings.toLowerCase(currentEvent.status.toString())}"
+                th:text="${@uiLabels.eventStatus(currentEvent.status)}">—</span>
+          <span th:if="${currentEvent.status == null}">—</span>
+        </p>
+        <p class="muted">La mutare, responsabilul poate fi resetat pentru a evita referințe între biserici.</p>
+      </div>
+
+      <label class="checkbox-inline settings-checkbox">
+        <input type="checkbox" th:field="*{clearImplementedBy}" />
+        <span>Resetează responsabilul la mutare</span>
+      </label>
+
+      <div class="settings-actions">
+        <button type="submit" class="button primary" th:disabled="${availableTargets.empty}">Mută evenimentul</button>
+      </div>
+
+      <p th:if="${!events.empty and availableTargets.empty}" class="muted">Nu există alte biserici disponibile ca destinație.</p>
+    </form>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ro" data-theme="light" th:attr="data-ui-theme=${headerUiTheme}">
+<head>
+  <meta charset="UTF-8" />
+  <title th:text="${(headerActiveChurch != null and headerActiveChurch.name != null and !#strings.isEmpty(headerActiveChurch.name) ? headerActiveChurch.name + ' · ' : '') + title}">Familie</title>
+  <th:block th:replace="~{fragments/layout :: headAssets}"></th:block>
+</head>
+<body>
+<div class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 th:text="${title}" data-i18n="family.title">Familie</h1>
+    </div>
+    <div class="header-actions">
+      <nav th:replace="~{fragments/layout :: mainNav}"></nav>
+      <form th:replace="~{fragments/layout :: churchSwitcher}"></form>
+      <button th:replace="~{fragments/layout :: themeToggle}"></button>
+      <details th:replace="~{fragments/layout :: adminMenu}"></details>
+    </div>
+  </header>
+
+  <section class="settings-card">
+    <h2 data-i18n="family.treeTitle">Arbore de familie</h2>
+    <p class="muted"><span data-i18n="family.keyLabel">Cheie familie:</span> <span th:text="${familyKey}">-</span></p>
+
+    <div th:if="${members.empty}" class="muted" data-i18n="family.empty">Niciun membru găsit pentru această familie.</div>
+
+    <div th:if="${!members.empty}" class="family-tree">
+      <ul class="family-tree-root">
+        <li th:each="node : ${roots}" th:replace="~{families/view :: familyNode(node=${node}, members=${members})}"></li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<th:block th:fragment="familyNode(node, members)">
+  <article class="family-node-card">
+    <div class="family-node-main">
+      <div class="family-node-avatar"
+           th:text="${#strings.substring(T(ro.church_office.teamleaf.web.FamilyWebController).displayName(node.person), 0, 1)}">A</div>
+      <div class="family-node-copy">
+        <div class="family-node-title">
+          <a th:href="@{'/persons/' + ${node.person.id}}" class="link"
+             th:text="${T(ro.church_office.teamleaf.web.FamilyWebController).displayName(node.person)}">Persoană</a>
+          <small th:if="${T(ro.church_office.teamleaf.web.FamilyWebController).isSpouseInTree(node.person, members)}" data-i18n="family.spouse">(soț/soție)</small>
+        </div>
+        <div class="muted" th:text="${node.person.phone != null and !#strings.isEmpty(node.person.phone) ? node.person.phone : '—'}">Telefon</div>
+      </div>
+      <div class="family-node-actions">
+        <a th:href="@{'/persons/' + ${node.person.id} + '/edit'}" class="icon-button" aria-label="Editează" data-i18n-aria-label="actions.edit">
+          <span class="material-icons" aria-hidden="true">edit</span>
+        </a>
+      </div>
+    </div>
+
+    <ul class="family-children" th:if="${!node.children.empty}">
+      <li th:each="child : ${node.children}" th:replace="~{families/view :: familyNode(node=${child}, members=${members})}"></li>
+    </ul>
+  </article>
+</th:block>
+</body>
+</html>

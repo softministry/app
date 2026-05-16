@@ -1,0 +1,22 @@
+server:
+  port: 8085
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        show_sql: false
+  thymeleaf:
+    mode: HTML
+    cache: false
+
+theme:
+  app:
+    title: "Church Administration Platform (local)"
+
+logging:
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
