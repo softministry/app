@@ -1,0 +1,55 @@
+name: Build Windows Package
+
+on:
+  push:
+    branches: [ dev, main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Build JAR with Maven
+        run: mvn -B -DskipTests clean package
+        continue-on-error: true
+      
+      - name: Create package-input directory
+        run: |
+          New-Item -ItemType Directory -Force -Path package-input
+          if (Test-Path "target\*.jar") {
+            Copy-Item target\*.jar package-input\ -Force
+          }
+      
+      - name: Build Windows Portable Package
+        run: |
+          cd packaging
+          .\build-windows-portable.ps1
+        shell: powershell
+      
+      - name: Upload Windows Portable Package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-portable-package
+          path: packaging/dist/Church Administration Platform-portable.zip
+          retention-days: 30
+      
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-executable
+          path: packaging/dist/Church Administration Platform/
+          retention-days: 30
