@@ -1,6 +1,6 @@
 Param(
   [string]$AppName = "Church Administration Platform",
-  [string]$AppVersion = "0.1.0",
+  [string]$AppVersion = "1.0.0",
   [string]$AppVendor = "Church Administration Platform",
   [string]$AppDescription = "Church Administration Platform desktop app"
 )
@@ -26,6 +26,25 @@ function Require-Command {
 
 Require-Command "mvn"
 
+function Resolve-MainJar {
+  if (Test-Path $MainJar) {
+    return $MainJar
+  }
+
+  $jar = Get-ChildItem -Path $TargetDir -Filter "ministryadmin-web-*.jar" -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -notlike "*.original" } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+  if ($null -ne $jar) {
+    return $jar.FullName
+  }
+
+  return $MainJar
+}
+
+$MainJar = Resolve-MainJar
+
 if (-not (Test-Path $MainJar)) {
   Write-Host "Jar-ul nu exista, rulez build Maven..."
   Push-Location $RootDir
@@ -35,6 +54,7 @@ if (-not (Test-Path $MainJar)) {
   finally {
     Pop-Location
   }
+  $MainJar = Resolve-MainJar
 }
 
 if (-not (Test-Path $MainJar)) {

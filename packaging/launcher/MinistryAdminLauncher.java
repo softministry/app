@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -172,7 +173,8 @@ public final class MinistryAdminLauncher {
                 throw new IllegalStateException("Nu pot determina Contents dir pentru app.");
             }
             Path javaBin = contentsDir.resolve("runtime/Contents/Home/bin/java");
-            Path bootJar = contentsDir.resolve("app/ministryadmin-web-0.1.0.jar");
+            Path appDir = contentsDir.resolve("app");
+            Path bootJar = resolveBootJar(appDir);
             if (!Files.isRegularFile(javaBin)) {
                 throw new IllegalStateException("Nu găsesc java runtime: " + javaBin);
             }
@@ -243,6 +245,24 @@ public final class MinistryAdminLauncher {
             setStatus("eroare");
         }
         refreshButtons();
+    }
+
+    private Path resolveBootJar(Path appDir) throws IOException {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(appDir, "ministryadmin-web-*.jar")) {
+            Path found = null;
+            for (Path candidate : stream) {
+                String name = candidate.getFileName().toString();
+                if (name.endsWith(".jar.original")) {
+                    continue;
+                }
+                found = candidate;
+                break;
+            }
+            if (found != null) {
+                return found;
+            }
+        }
+        throw new IllegalStateException("Nu găsesc jar aplicație în: " + appDir);
     }
 
     private synchronized void stopServer() {

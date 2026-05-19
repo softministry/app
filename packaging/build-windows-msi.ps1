@@ -1,6 +1,6 @@
 Param(
   [string]$AppName = "Church Administration Platform",
-  [string]$AppVersion = "0.1.0",
+  [string]$AppVersion = "1.0.0",
   [string]$AppVendor = "Church Administration Platform",
   [string]$AppDescription = "Church Administration Platform desktop app",
   [string]$AppIdentifier = "ro.churchoffice.churchadministrationplatform"
@@ -14,7 +14,7 @@ $TargetDir = Join-Path $RootDir "target"
 $DistDir = Join-Path $RootDir "packaging\dist"
 $PackageInputDir = Join-Path $RootDir "package-input"
 $MainJar = Join-Path $TargetDir "ministryadmin-web-$AppVersion.jar"
-$PackageJar = Join-Path $PackageInputDir "ministryadmin-web-$AppVersion.jar"
+$PackageJar = $null
 $IconPath = Join-Path $RootDir "src\main\resources\static\img\ministryadmin-icon.ico"
 
 function Require-Command {
@@ -27,6 +27,23 @@ function Require-Command {
 Require-Command "mvn"
 Require-Command "jpackage"
 
+function Resolve-MainJar {
+  if (Test-Path $MainJar) {
+    return $MainJar
+  }
+
+  $jar = Get-ChildItem -Path $TargetDir -Filter "ministryadmin-web-*.jar" -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -notlike "*.original" } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+  if ($null -ne $jar) {
+    return $jar.FullName
+  }
+
+  return $MainJar
+}
+
 Write-Host "Rulez build Maven pentru a include ultimele modificari..."
 Push-Location $RootDir
 try {
@@ -36,6 +53,7 @@ finally {
   Pop-Location
 }
 
+$MainJar = Resolve-MainJar
 if (-not (Test-Path $MainJar)) {
   throw "Jar-ul principal nu exista: $MainJar"
 }
@@ -48,6 +66,7 @@ if (Test-Path $PackageInputDir) {
   Remove-Item -Recurse -Force $PackageInputDir
 }
 New-Item -ItemType Directory -Force -Path $PackageInputDir | Out-Null
+$PackageJar = Join-Path $PackageInputDir ([System.IO.Path]::GetFileName($MainJar))
 Copy-Item $MainJar $PackageJar
 
 New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
@@ -72,4 +91,3 @@ Write-Host "Generez installer MSI..."
 Write-Host ""
 Write-Host "MSI generat in: $DistDir"
 Get-ChildItem -Path $DistDir -Filter "*.msi" | Select-Object FullName
-
