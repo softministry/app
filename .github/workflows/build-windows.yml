@@ -21,15 +21,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      - name: Install manager-core dependency
-        run: |
-          if (Test-Path "manager-core") {
-            cd manager-core
-            mvn clean install -DskipTests
-            cd ..
-          }
-        shell: powershell
-      
       - name: Build JAR with Maven
         run: mvn -B -DskipTests clean package
       

@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ro.church-office</groupId>
+    <groupId>com.ministryadmin</groupId>
     <artifactId>ministryadmin-web</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <name>ministryadmin-web</name>
     <description>Spring Boot + Thymeleaf web experience for Church Administration Platform</description>
 
@@ -24,7 +24,6 @@
         <argLine></argLine>
         <jacoco.minimum.line.coverage>0.25</jacoco.minimum.line.coverage>
         <jacoco.skip>false</jacoco.skip>
-        <ministryadmin-core.version>0.0.1-SNAPSHOT</ministryadmin-core.version>
     </properties>
 
     <dependencies>
@@ -45,29 +44,15 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
         </dependency>
 
-        <!-- Reuse existing backend services/entities/repositories -->
-        <dependency>
-            <groupId>ro.church-office</groupId>
-            <artifactId>ministryadmin-core</artifactId>
-            <version>${ministryadmin-core.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.postgresql</groupId>
-                    <artifactId>postgresql</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <!-- Embedded DB drivers for local/desktop profiles -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+        <!-- Embedded DB driver for local/desktop profiles -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>

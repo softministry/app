@@ -7,11 +7,10 @@ abstract class AbstractContainerIT {
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:h2:mem:ministryadmin_it;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
-        registry.add("spring.datasource.username", () -> "sa");
-        registry.add("spring.datasource.password", () -> "");
-        registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
+        String sqlitePath = System.getProperty("java.io.tmpdir") + "/ministryadmin-it.sqlite.db";
+        registry.add("spring.datasource.url", () -> "jdbc:sqlite:" + sqlitePath);
+        registry.add("spring.datasource.driver-class-name", () -> "org.sqlite.JDBC");
+        registry.add("spring.jpa.database-platform", () -> "org.hibernate.community.dialect.SQLiteDialect");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
         registry.add("spring.flyway.enabled", () -> "false");
         registry.add("ministryadmin.initial-admin-password", () -> "IntegrationTest123!");
