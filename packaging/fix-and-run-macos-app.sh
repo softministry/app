@@ -14,8 +14,7 @@ RUN_LOG="${HOME}/ChurchAdministrationPlatform/logs/ministryadmin-launch.log"
 RUNTIME_CFG="${HOME}/ChurchAdministrationPlatform/config/runtime-mode.properties"
 CFG_DIR="${HOME}/ChurchAdministrationPlatform/config"
 DATA_DIR="${HOME}/ChurchAdministrationPlatform/data"
-DB_MAIN="${DATA_DIR}/ministryadmin-db.mv.db"
-DB_TRACE="${DATA_DIR}/ministryadmin-db.trace.db"
+DB_MAIN="${DATA_DIR}/ministryadmin.sqlite.db"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 
@@ -38,14 +37,10 @@ if [[ -f "${DB_MAIN}" ]]; then
   mv "${DB_MAIN}" "${DB_MAIN}.bak-${timestamp}"
   echo "Backup creat: ${DB_MAIN}.bak-${timestamp}"
 fi
-if [[ -f "${DB_TRACE}" ]]; then
-  mv "${DB_TRACE}" "${DB_TRACE}.bak-${timestamp}"
-  echo "Backup creat: ${DB_TRACE}.bak-${timestamp}"
-fi
 
 echo "4b/6 Setare runtime pe bază nouă (fresh)..."
 mkdir -p "${CFG_DIR}"
-FRESH_BASE="${DATA_DIR}/ministryadmin-db-fresh-${timestamp}"
+FRESH_BASE="${DATA_DIR}/ministryadmin-fresh-${timestamp}.sqlite.db"
 cat > "${RUNTIME_CFG}" <<EOF
 ministryadmin.desktop.runtime-mode=prod
 ministryadmin.desktop.database-file-base=${FRESH_BASE}

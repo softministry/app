@@ -12,7 +12,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,9 +48,6 @@ public class PrimaryDatabaseService extends DatabaseService {
         if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:postgresql:")) {
             return exportPostgres(fresh, jdbcUrl);
         }
-        if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:h2:file:")) {
-            return exportH2File(fresh, jdbcUrl);
-        }
         if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:")) {
             return exportSqliteFile(fresh, jdbcUrl);
         }
@@ -66,10 +62,6 @@ public class PrimaryDatabaseService extends DatabaseService {
         String jdbcUrl = environment.getProperty("spring.datasource.url", "");
         if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:postgresql:")) {
             importPostgres(file, jdbcUrl);
-            return;
-        }
-        if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:h2:file:")) {
-            importH2File(file, jdbcUrl);
             return;
         }
         if (jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:")) {
@@ -125,6 +117,9 @@ public class PrimaryDatabaseService extends DatabaseService {
                 if ("readme.txt".equals(name)) {
                     continue;
                 }
+                if (name.endsWith(".mv.db") || name.endsWith(".trace.db")) {
+                    throw new IOException("Arhiva nu este compatibilă cu SQLite (pare backup H2).");
+                }
                 if (!name.endsWith(".db") && !name.endsWith(".sqlite") && !name.endsWith(".sqlite3")) {
                     continue;
                 }
@@ -139,9 +134,7 @@ public class PrimaryDatabaseService extends DatabaseService {
         }
 
         if (!extracted) {
-            // fresh import
-            Files.deleteIfExists(sqliteFile);
-            return;
+            throw new IOException("Arhiva pentru SQLite trebuie să conțină un fișier .db/.sqlite/.sqlite3.");
         }
 
         normalizeSqliteDateColumns(sqliteFile);
@@ -177,80 +170,6 @@ public class PrimaryDatabaseService extends DatabaseService {
         }
     }
 
-    private InputStream exportH2File(boolean fresh, String jdbcUrl) throws IOException {
-        Path tmp = Files.createTempFile("db-export-", ".zip");
-        try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(
-                Files.newOutputStream(tmp, StandardOpenOption.TRUNCATE_EXISTING)))) {
-            if (fresh) {
-                zos.putNextEntry(new ZipEntry("README.txt"));
-                String txt = "Fresh export: baza va fi recreată la import/rulare.\n";
-                zos.write(txt.getBytes());
-                zos.closeEntry();
-            } else {
-                Path base = resolveH2BasePath(jdbcUrl);
-                List<Path> candidates = listH2Files(base);
-                if (candidates.isEmpty()) {
-                    throw new IOException("Nu am găsit fișiere H2 pentru export la: " + base);
-                }
-                for (Path p : candidates) {
-                    zos.putNextEntry(new ZipEntry(p.getFileName().toString()));
-                    Files.copy(p, zos);
-                    zos.closeEntry();
-                }
-            }
-        }
-        return Files.newInputStream(tmp, StandardOpenOption.DELETE_ON_CLOSE);
-    }
-
-    private void importH2File(MultipartFile file, String jdbcUrl) throws IOException {
-        Path tmp = Files.createTempFile("db-import-", ".zip");
-        try (InputStream in = file.getInputStream()) {
-            Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        boolean hasDbFiles = false;
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(tmp)))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (!entry.isDirectory() && !entry.getName().equalsIgnoreCase("README.txt")) {
-                    hasDbFiles = true;
-                    break;
-                }
-            }
-        }
-
-        Path base = resolveH2BasePath(jdbcUrl);
-        Path parent = base.getParent() == null ? Paths.get(".") : base.getParent();
-        Files.createDirectories(parent);
-
-        if (!hasDbFiles) {
-            for (Path p : listH2Files(base)) {
-                Files.deleteIfExists(p);
-            }
-            return;
-        }
-
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(tmp)))) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.isDirectory()) {
-                    continue;
-                }
-                String name = Paths.get(entry.getName()).getFileName().toString();
-                if ("README.txt".equalsIgnoreCase(name)) {
-                    continue;
-                }
-                Path out = parent.resolve(name).normalize();
-                if (!out.startsWith(parent.normalize())) {
-                    throw new IOException("Intrare ZIP invalidă: " + entry.getName());
-                }
-                try (OutputStream os = new BufferedOutputStream(
-                        Files.newOutputStream(out, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-                    zis.transferTo(os);
-                }
-            }
-        }
-    }
 
     private InputStream exportPostgres(boolean fresh, String jdbcUrl) throws IOException {
         String dbName = extractPostgresDbName(jdbcUrl);
@@ -505,37 +424,6 @@ public class PrimaryDatabaseService extends DatabaseService {
             throw new IOException(operation + " a depășit timeout-ul de " + PROCESS_TIMEOUT_SECONDS + "s.");
         }
         return process.exitValue();
-    }
-
-    private Path resolveH2BasePath(String jdbcUrl) {
-        String raw = jdbcUrl.substring("jdbc:h2:file:".length());
-        int paramsIdx = raw.indexOf(';');
-        String base = paramsIdx >= 0 ? raw.substring(0, paramsIdx) : raw;
-        if (base.startsWith("~")) {
-            base = System.getProperty("user.home") + base.substring(1);
-        }
-        return Paths.get(base).toAbsolutePath().normalize();
-    }
-
-    private List<Path> listH2Files(Path base) throws IOException {
-        List<Path> files = new ArrayList<>();
-        Path parent = base.getParent() == null ? Paths.get(".") : base.getParent();
-        String stem = base.getFileName().toString();
-        if (!Files.exists(parent)) {
-            return files;
-        }
-        try (DirectoryStream<Path> ds = Files.newDirectoryStream(parent, stem + "*")) {
-            for (Path p : ds) {
-                if (!Files.isRegularFile(p)) {
-                    continue;
-                }
-                String name = p.getFileName().toString();
-                if (name.endsWith(".mv.db") || name.endsWith(".trace.db") || name.endsWith(".h2.db")) {
-                    files.add(p);
-                }
-            }
-        }
-        return files;
     }
 
     private String extractPostgresDbName(String jdbcUrl) {

@@ -14,15 +14,13 @@ spring:
   main:
     headless: false
   datasource:
-    url: jdbc:h2:file:${ministryadmin.desktop.database-file-base};AUTO_SERVER=TRUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: jdbc:sqlite:${ministryadmin.desktop.database-file-base}
+    driver-class-name: org.sqlite.JDBC
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     properties:
       hibernate:
         show_sql: false
@@ -55,7 +53,7 @@ ministryadmin:
     uploads-dir: ${ministryadmin.desktop.home-dir}/uploads
     backups-dir: ${ministryadmin.desktop.home-dir}/backups
     logs-dir: ${ministryadmin.desktop.home-dir}/logs
-    database-file-base: ${ministryadmin.desktop.data-dir}/ministryadmin-db
+    database-file-base: ${ministryadmin.desktop.data-dir}/ministryadmin.sqlite.db
     open-browser-on-start: true
     startup-path: /dashboard
     keep-in-dock: true

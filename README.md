@@ -8,7 +8,7 @@ Această aplicație este versiunea Spring Boot + Thymeleaf a Administrației Bis
    ```bash
    mvn spring-boot:run
    ```
-2. Pentru dev/local fără Postgres, pornește cu profilul `dev` (H2):
+2. Pentru dev/local fără Postgres, pornește cu profilul `dev` (SQLite):
    ```bash
    mvn spring-boot:run -Dspring-boot.run.profiles=dev
    ```

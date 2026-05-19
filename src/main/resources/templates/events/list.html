@@ -23,7 +23,6 @@
       </a>
       <button th:replace="~{fragments/layout :: themeToggle}"></button>
       <details th:replace="~{fragments/layout :: adminMenu}"></details>
-      <select th:replace="~{fragments/layout :: languageSelect}"></select>
     </div>
   </header>
 
@@ -162,7 +161,7 @@
       </td>
       <td class="visual-cell">
         <span class="priority-pill"
-              th:attr="data-priority=${event.priority},data-i18n=${event.priority != null ? 'priority.' + event.priority.value : null}"
+              th:attr="data-priority=${event.priority},data-i18n=${event.priority != null ? 'priority.' + event.priority : null}"
               th:text="${@uiLabels.priority(event.priority)}"></span>
       </td>
       <td>

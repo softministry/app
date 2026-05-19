@@ -13,7 +13,7 @@ APP_BIN="${APP_PATH}/Contents/MacOS/Church Administration Platform"
 CFG_DIR="${HOME}/ChurchAdministrationPlatform/config"
 RUNTIME_CFG="${CFG_DIR}/runtime-mode.properties"
 DATA_DIR="${HOME}/ChurchAdministrationPlatform/data"
-EXISTING_DB_BASE="${DATA_DIR}/ministryadmin-db"
+EXISTING_DB_BASE="${DATA_DIR}/ministryadmin.sqlite.db"
 RUN_LOG="${HOME}/ChurchAdministrationPlatform/logs/ministryadmin-launch-existing.log"
 
 echo "1/4 Verificare aplicație..."
@@ -42,4 +42,3 @@ else
   echo "Aplicația nu a rămas pornită. Verifică:"
   echo "  tail -n 120 ${RUN_LOG}"
 fi
-

@@ -74,7 +74,7 @@ public class EventWebController {
                        @RequestParam(value = "groupId", required = false) Long groupId,
                        @RequestParam(value = "sort", defaultValue = "openDateAsc") String sort,
                        @RequestParam(value = "page", defaultValue = "1") int page,
-                       @RequestParam(value = "size", defaultValue = "5") int size,
+                       @RequestParam(value = "size", defaultValue = "20") int size,
                        @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                        Model model) {
         populateListModel(q, status, eventType, groupId, sort, page, size, scrollOnly, model);
@@ -89,7 +89,7 @@ public class EventWebController {
                               @RequestParam(value = "groupId", required = false) Long groupId,
                               @RequestParam(value = "sort", defaultValue = "openDateAsc") String sort,
                               @RequestParam(value = "page", defaultValue = "1") int page,
-                              @RequestParam(value = "size", defaultValue = "5") int size,
+                              @RequestParam(value = "size", defaultValue = "20") int size,
                               @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                               Model model) {
         populateListModel(q, status, eventType, groupId, sort, page, size, scrollOnly, model);
@@ -632,7 +632,7 @@ public class EventWebController {
     private int normalizeSize(int size) {
         return switch (size) {
             case 5, 7, 10, 20, 50 -> size;
-            default -> 5;
+            default -> 20;
         };
     }
 

@@ -69,11 +69,12 @@
 
 
   <div class="header-toast-stack"
-       th:if="${(headerBirthdayNotifications != null and !#lists.isEmpty(headerBirthdayNotifications)) or headerPasswordReminderVisible}"
+       th:if="${((headerBirthdayNotifications != null and !#lists.isEmpty(headerBirthdayNotifications)) and #strings.startsWith(headerCurrentPath, '/dashboard')) or headerPasswordReminderVisible}"
        aria-live="polite"
        aria-label="Notificări"
        data-i18n-aria-label="notifications.label">
-    <article th:each="notification : ${headerBirthdayNotifications}"
+    <article th:if="${#strings.startsWith(headerCurrentPath, '/dashboard')}"
+             th:each="notification : ${headerBirthdayNotifications}"
              class="header-toast birthday-toast"
              data-header-toast
              data-toast-duration-ms="5000">
@@ -162,11 +163,7 @@
     <span class="material-icons" aria-hidden="true">person</span>
   </summary>
   <div class="nav-group-options nav-group-options-admin">
-    <a th:href="@{/settings}" class="nav-group-link"><span class="material-icons" aria-hidden="true">tune</span><span data-i18n="menu.userSettings">Setări utilizator</span></a>
-    <a th:href="@{/settings/church}" class="nav-group-link"><span class="material-icons" aria-hidden="true">location_city</span><span data-i18n="menu.editChurch">Editare Biserică</span></a>
-    <a th:href="@{/settings/database}" class="nav-group-link"><span class="material-icons" aria-hidden="true">storage</span><span data-i18n="menu.databaseTools">Import/Export bază de date</span></a>
-    <a th:href="@{/account/password}" class="nav-group-link"><span class="material-icons" aria-hidden="true">password</span><span data-i18n="menu.changePassword">Schimbă parola</span></a>
-    <a th:if="${headerCanManageUsers}" th:href="@{/admin/users}" class="nav-group-link"><span class="material-icons" aria-hidden="true">manage_accounts</span><span data-i18n="menu.usersAdmin">Gestiune users</span></a>
+    <a th:href="@{/settings/church}" class="nav-group-link"><span class="material-icons" aria-hidden="true">tune</span><span data-i18n="menu.settings">Setări</span></a>
     <div class="nav-group-link nav-group-language">
       <span class="material-icons nav-group-language-icon" aria-hidden="true">language</span>
       <span data-i18n="menu.language">Limba</span>
@@ -186,7 +183,7 @@
               onclick="return confirm('Sigur vrei să oprești aplicația acum?');"
               aria-label="Oprește"
               title="Oprește">
-        <span class="material-icons" aria-hidden="true">power_settings_new</span><span>Oprește</span>
+        <span class="material-icons" aria-hidden="true">power_settings_new</span>
       </button>
     </form>
   </div>

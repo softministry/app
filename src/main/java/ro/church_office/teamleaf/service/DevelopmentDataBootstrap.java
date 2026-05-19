@@ -117,8 +117,8 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
                 ? List.of("Popescu", "Ionescu", "Dumitrescu", "Marin", "Radu", "Matei", "Stan", "Nistor", "Georgescu", "Munteanu")
                 : List.of("Smith", "Johnson", "Miller", "Davis", "Taylor", "Anderson", "White", "Clark", "Harris", "Lewis");
         List<String> roles = ro
-                ? List.of("Pastor", "Lider grup", "Voluntar", "Învățător", "Membru")
-                : List.of("Pastor", "Group Leader", "Volunteer", "Teacher", "Member");
+                ? List.of("Pastor coordonator", "Prezbiter", "Diacon", "Lider tineret", "Lider închinare", "Învățător școala duminicală", "Membru")
+                : List.of("Lead Pastor", "Elder", "Deacon", "Youth Leader", "Worship Leader", "Sunday School Teacher", "Member");
 
         int size = 120;
         List<Person> result = new ArrayList<>(size);
@@ -130,7 +130,11 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
             p.setPhone("+40 7" + (1000000 + random.nextInt(8999999)));
             p.setChurchRole(roles.get(random.nextInt(roles.size())));
             p.setAddress(ro ? "Str. Exemplu " + (1 + random.nextInt(120)) : (100 + random.nextInt(900)) + " Sample St");
-            p.setPosition(random.nextBoolean() ? (ro ? "Echipă închinare" : "Worship Team") : null);
+            p.setPosition(random.nextBoolean()
+                    ? (ro
+                    ? List.of("Echipă închinare", "Cor bisericesc", "Echipă media", "Asistență pastorală", "Lucrare cu tinerii").get(random.nextInt(5))
+                    : List.of("Worship Team", "Church Choir", "Media Team", "Pastoral Care", "Youth Ministry").get(random.nextInt(5)))
+                    : null);
             p.setBirthDate(LocalDate.now().minusYears(14 + random.nextInt(55)).minusDays(random.nextInt(365)));
             p.setMemberType(random.nextDouble() < 0.14 ? MemberType.FREND : MemberType.MEMBER);
             result.add(personRepository.save(p));
@@ -140,16 +144,44 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
 
     private List<ChurchGroup> createGroups(Long churchId, List<Person> people, boolean ro, Random random) {
         List<String> names = ro
-                ? List.of("Tineri", "Familii Nord", "Ucenicie Marți", "Rugăciune Joi", "Voluntari Duminică", "Fundație Biblică")
-                : List.of("Youth", "North Families", "Tuesday Discipleship", "Thursday Prayer", "Sunday Volunteers", "Bible Foundations");
+                ? List.of(
+                "Comitet diaconi",
+                "Consiliu prezbiteri",
+                "Tineret penticostal",
+                "Rugăciune și mijlocire",
+                "Școala duminicală",
+                "Cor și închinare")
+                : List.of(
+                "Deacons Committee",
+                "Elders Council",
+                "Pentecostal Youth",
+                "Prayer and Intercession",
+                "Sunday School Team",
+                "Choir and Worship");
+        List<String> descriptions = ro
+                ? List.of(
+                "Coordonare slujire practică, vizite și sprijin comunitar.",
+                "Consiliere spirituală, disciplină și direcție doctrinară.",
+                "Ucenicie, părtășie și proiecte de misiune pentru tineri.",
+                "Întâlniri de rugăciune pentru biserică, familii și misiune.",
+                "Planificare lecții biblice și activități pentru copii.",
+                "Pregătire muzicală pentru serviciile divine și seri speciale.")
+                : List.of(
+                "Practical ministry coordination, visits, and community support.",
+                "Spiritual counsel, discipline, and doctrinal direction.",
+                "Discipleship, fellowship, and outreach projects for youth.",
+                "Prayer meetings for church, families, and outreach.",
+                "Bible lesson planning and activities for children.",
+                "Music preparation for worship services and special evenings.");
         List<ChurchGroup> groups = new ArrayList<>();
+        List<Person> maleLeaders = maleAssigneePool(people, ro);
         for (int i = 0; i < names.size(); i++) {
             ChurchGroup g = new ChurchGroup();
             g.setChurchId(churchId);
             g.setName(names.get(i));
             g.setType(GroupType.SMALL_GROUP);
-            g.setDescription(ro ? "Grup de lucru pentru " + names.get(i) : "Working group for " + names.get(i));
-            Person leader = people.get(random.nextInt(people.size()));
+            g.setDescription(descriptions.get(i));
+            Person leader = maleLeaders.get(random.nextInt(maleLeaders.size()));
             g.setLeader(leader);
 
             java.util.LinkedHashSet<Person> members = new java.util.LinkedHashSet<>();
@@ -165,16 +197,43 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
 
     private void createEvents(List<Person> people, List<ChurchGroup> groups, boolean ro, Random random) {
         List<String> eventNames = ro
-                ? List.of("Întâlnire lideri", "Studiu biblic", "Vizite pastorale", "Planificare duminică", "Repetiție închinare", "Conferință tineri", "Întâlnire voluntari")
-                : List.of("Leaders Sync", "Bible Study", "Pastoral Visits", "Sunday Planning", "Worship Rehearsal", "Youth Conference", "Volunteer Meetup");
+                ? List.of(
+                "Serviciu divin duminică dimineața",
+                "Studiu biblic doctrinar baptist",
+                "Rugăciune de mijlocire penticostală",
+                "Întâlnire comitet diaconi",
+                "Repetiție fanfară și cor",
+                "Cateheză pentru botez",
+                "Evanghelizare de cartier",
+                "Școala duminicală copii",
+                "Conferință tineret penticostal",
+                "Vizite pastorale familii",
+                "Întâlnire slujitori și prezbiteri",
+                "Seară de mărturii și închinare")
+                : List.of(
+                "Sunday Worship Service",
+                "Baptist Doctrine Bible Study",
+                "Pentecostal Intercessory Prayer",
+                "Deacons Committee Meeting",
+                "Brass Band and Choir Rehearsal",
+                "Baptism Preparation Class",
+                "Neighborhood Outreach",
+                "Children Sunday School",
+                "Pentecostal Youth Conference",
+                "Pastoral Family Visits",
+                "Elders and Ministers Meeting",
+                "Testimony and Worship Evening");
         EventStatus[] statuses = EventStatus.values();
         EventType[] eventTypes = EventType.values();
         Priority[] priorities = Priority.values();
+        List<Person> maleAssignees = maleAssigneePool(people, ro);
 
         for (int i = 0; i < 42; i++) {
             EventDTO dto = new EventDTO();
-            dto.setEventName(eventNames.get(random.nextInt(eventNames.size())) + " #" + (i + 1));
-            dto.setAbout(ro ? "Eveniment generat automat pentru mediu de dezvoltare." : "Auto-generated event for development environment.");
+            dto.setEventName(eventNames.get(random.nextInt(eventNames.size())));
+            dto.setAbout(ro
+                    ? "Scenariu demo pentru biserică baptistă/penticostală: slujire, ucenicie, rugăciune și misiune."
+                    : "Demo scenario for Baptist/Pentecostal church life: worship, discipleship, prayer, and outreach.");
             dto.setStatus(statuses[random.nextInt(statuses.length)].name());
             dto.setEventType(eventTypes[random.nextInt(eventTypes.length)].name());
             dto.setPriority(priorities[random.nextInt(priorities.length)].name());
@@ -182,11 +241,21 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
             ChurchGroup g = groups.get(random.nextInt(groups.size()));
             dto.setGroupId(g.getId());
 
-            Person assignee = people.get(random.nextInt(people.size()));
+            Person assignee = maleAssignees.get(random.nextInt(maleAssignees.size()));
             PersonDTO personDTO = new PersonDTO();
             personDTO.setId(assignee.getId());
             dto.setImplementedBy(personDTO);
             eventService.saveEvent(dto);
         }
+    }
+
+    private List<Person> maleAssigneePool(List<Person> people, boolean ro) {
+        List<String> maleFirstNames = ro
+                ? List.of("Andrei", "Mihai", "Cristian", "Alex", "Vlad", "Daniel", "Gabriel")
+                : List.of("James", "Daniel", "Michael", "David", "Samuel", "Noah");
+        List<Person> males = people.stream()
+                .filter(person -> person.getFirstName() != null && maleFirstNames.contains(person.getFirstName()))
+                .toList();
+        return males.isEmpty() ? people : males;
     }
 }

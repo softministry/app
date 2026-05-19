@@ -30,11 +30,23 @@
 
   <div class="settings-shell">
     <nav class="settings-nav">
-      <a th:href="@{/settings/appearance}" class="link-button" th:classappend="${activeTab == 'appearance'} ? ' is-active' : ''" data-i18n="settings.appearance">Font &amp; culori</a>
-      <a th:href="@{/settings/church}" class="link-button" th:classappend="${activeTab == 'church'} ? ' is-active' : ''" data-i18n="settings.church">Editare Biserică</a>
-      <a th:href="@{/settings/pastoral}" class="link-button" th:classappend="${activeTab == 'pastoral'} ? ' is-active' : ''" data-i18n="settings.pastoral">Pastoral</a>
-      <a th:href="@{/settings/reports}" class="link-button" th:classappend="${activeTab == 'reports'} ? ' is-active' : ''">Rapoarte</a>
-      <a th:href="@{/settings/system}" class="link-button" th:classappend="${activeTab == 'system'} ? ' is-active' : ''" data-i18n="settings.system">Sistem</a>
+      <section class="settings-nav-group" aria-label="General">
+        <p class="settings-nav-group-title">General</p>
+        <a th:href="@{/settings/church}" class="link-button" th:classappend="${activeTab == 'church'} ? ' is-active' : ''" data-i18n="settings.church">Editare Biserică</a>
+        <a th:href="@{/settings/pastoral}" class="link-button" th:classappend="${activeTab == 'pastoral'} ? ' is-active' : ''" data-i18n="settings.pastoral">Pastoral</a>
+        <a th:href="@{/settings/reports}" class="link-button" th:classappend="${activeTab == 'reports'} ? ' is-active' : ''">Rapoarte</a>
+        <a th:href="@{/settings/appearance}" class="link-button" th:classappend="${activeTab == 'appearance'} ? ' is-active' : ''" data-i18n="settings.appearance">Font &amp; culori</a>
+      </section>
+      <section class="settings-nav-group" aria-label="Administrare">
+        <p class="settings-nav-group-title">Administrare</p>
+        <a th:href="@{/settings/system}" class="link-button" th:classappend="${activeTab == 'system'} ? ' is-active' : ''" data-i18n="settings.system">Sistem</a>
+        <a th:href="@{/settings/database}" class="link-button" data-i18n="menu.databaseTools">Import/Export bază de date</a>
+        <a th:if="${headerCanManageUsers}" th:href="@{/admin/users}" class="link-button" data-i18n="menu.usersAdmin">Administrare utilizatori</a>
+      </section>
+      <section class="settings-nav-group" aria-label="Securitate">
+        <p class="settings-nav-group-title">Securitate</p>
+        <a th:href="@{/account/password}" class="link-button" data-i18n="menu.changePassword">Schimbă parola</a>
+      </section>
       <span class="settings-nav-hint" th:if="${activeTab == 'appearance'}" data-i18n="settings.navHintAppearance">Controlează tema și culorile pentru elementele cheie.</span>
       <span class="settings-nav-hint" th:if="${activeTab == 'pastoral'}" data-i18n="settings.navHintPastoral">Controlează regulile care alimentează cardul de atenție pastorală din dashboard.</span>
     </nav>

@@ -4,7 +4,7 @@ Acest pachet pregătește distribuția local-first pentru end user:
 
 - JRE inclus prin `jpackage`
 - instalator nativ (`.msi` / `.dmg` / `.deb`)
-- profil Spring `desktop` (H2 local + backup automat + deschidere browser)
+- profil Spring `desktop` (SQLite local + backup automat + deschidere browser)
 
 ## 1. Build aplicație
 
@@ -81,7 +81,7 @@ Scriptul folosește iconul aplicației din `src/main/resources/static/img/church
 
 La pornire, aplicația folosește automat:
 
-- DB local: `${user.home}/ChurchAdministrationPlatform/data/ministryadmin-db.mv.db`
+- DB local: `${user.home}/ChurchAdministrationPlatform/data/ministryadmin.sqlite.db`
 - Uploads: `${user.home}/ChurchAdministrationPlatform/uploads`
 - Backups: `${user.home}/ChurchAdministrationPlatform/backups`
 - Logs: `${user.home}/ChurchAdministrationPlatform/logs/ministryadmin.log`

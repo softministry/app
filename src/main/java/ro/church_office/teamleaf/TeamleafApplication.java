@@ -35,16 +35,14 @@ public class TeamleafApplication {
         try {
             Files.createDirectories(dataDir);
         } catch (Exception ignored) {
-            // Spring/H2 will report a clear startup error if the directory cannot be created.
+            // Spring/SQLite will report a clear startup error if the directory cannot be created.
         }
 
-        Path databaseFileBase = dataDir.resolve("ministryadmin-db");
+        Path databaseFile = dataDir.resolve("ministryadmin.sqlite.db");
 
-        setDefaultProperty("spring.datasource.url", "SPRING_DATASOURCE_URL", "jdbc:h2:file:" + databaseFileBase + ";AUTO_SERVER=TRUE");
-        setDefaultProperty("spring.datasource.username", "SPRING_DATASOURCE_USERNAME", "sa");
-        setDefaultProperty("spring.datasource.password", "SPRING_DATASOURCE_PASSWORD", "");
-        setDefaultProperty("spring.datasource.driver-class-name", "SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.h2.Driver");
-        setDefaultProperty("spring.jpa.database-platform", "SPRING_JPA_DATABASE_PLATFORM", "org.hibernate.dialect.H2Dialect");
+        setDefaultProperty("spring.datasource.url", "SPRING_DATASOURCE_URL", "jdbc:sqlite:" + databaseFile);
+        setDefaultProperty("spring.datasource.driver-class-name", "SPRING_DATASOURCE_DRIVER_CLASS_NAME", "org.sqlite.JDBC");
+        setDefaultProperty("spring.jpa.database-platform", "SPRING_JPA_DATABASE_PLATFORM", "org.hibernate.community.dialect.SQLiteDialect");
         setDefaultProperty("spring.jpa.hibernate.ddl-auto", "SPRING_JPA_HIBERNATE_DDL_AUTO", "update");
         setDefaultProperty("spring.flyway.enabled", "SPRING_FLYWAY_ENABLED", "false");
     }

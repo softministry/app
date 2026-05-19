@@ -23,17 +23,17 @@ public class DesktopBackupScheduler {
 
     private final boolean backupEnabled;
     private final Path backupsDir;
-    private final Path databaseFileBase;
+    private final Path databaseFile;
     private final int retentionDays;
 
     public DesktopBackupScheduler(
             @Value("${ministryadmin.desktop.backup.enabled:true}") boolean backupEnabled,
             @Value("${ministryadmin.desktop.backups-dir:${user.home}/ChurchAdministrationPlatform/backups}") String backupsDir,
-            @Value("${ministryadmin.desktop.database-file-base:${user.home}/ChurchAdministrationPlatform/data/ministryadmin-db}") String databaseFileBase,
+            @Value("${ministryadmin.desktop.database-file-base:${user.home}/ChurchAdministrationPlatform/data/ministryadmin.sqlite.db}") String databaseFileBase,
             @Value("${ministryadmin.desktop.backup.retention-days:30}") int retentionDays) {
         this.backupEnabled = backupEnabled;
         this.backupsDir = Paths.get(backupsDir).toAbsolutePath().normalize();
-        this.databaseFileBase = Paths.get(databaseFileBase).toAbsolutePath().normalize();
+        this.databaseFile = Paths.get(databaseFileBase).toAbsolutePath().normalize();
         this.retentionDays = Math.max(1, retentionDays);
     }
 
@@ -46,8 +46,7 @@ public class DesktopBackupScheduler {
         }
         try {
             Files.createDirectories(backupsDir);
-            backupIfExists(databaseFileBase.resolveSibling(databaseFileBase.getFileName() + ".mv.db"), "mv");
-            backupIfExists(databaseFileBase.resolveSibling(databaseFileBase.getFileName() + ".trace.db"), "trace");
+            backupIfExists(databaseFile, "sqlite");
             cleanupOldBackups();
         } catch (Exception ignored) {
             // Backup must never block startup/runtime.

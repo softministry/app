@@ -104,7 +104,7 @@ public class SettingsWebController {
                                  ConfigurableApplicationContext applicationContext,
                                  @org.springframework.beans.factory.annotation.Value("${ministryadmin.desktop.home-dir:${user.home}/ChurchAdministrationPlatform}") String desktopHomeDir,
                                  @org.springframework.beans.factory.annotation.Value("${ministryadmin.desktop.data-dir:${user.home}/ChurchAdministrationPlatform/data}") String desktopDataDir,
-                                 @org.springframework.beans.factory.annotation.Value("${ministryadmin.desktop.data-dir:${user.home}/ChurchAdministrationPlatform/data}/ministryadmin-db") String defaultProdDatabaseFileBase) {
+                                 @org.springframework.beans.factory.annotation.Value("${ministryadmin.desktop.data-dir:${user.home}/ChurchAdministrationPlatform/data}/ministryadmin.sqlite.db") String defaultProdDatabaseFileBase) {
         this.globalSettingRepository = globalSettingRepository;
         this.churchInfoService = churchInfoService;
         this.churchInfoRepository = churchInfoRepository;
@@ -444,7 +444,6 @@ public class SettingsWebController {
                 if (lower.endsWith(".sql")
                         || lower.endsWith(".dump")
                         || lower.endsWith(".backup")
-                        || lower.endsWith(".mv.db")
                         || lower.endsWith(".db")
                         || lower.endsWith(".sqlite")
                         || lower.endsWith(".sqlite3")) {
@@ -468,7 +467,7 @@ public class SettingsWebController {
             errors.add("Arhiva este goală.");
         }
         if (!foundExpectedPayload) {
-            errors.add("Arhiva nu conține un dump recognoscibil (.sql/.dump/.backup/.mv.db/.db/.sqlite/.sqlite3).");
+            errors.add("Arhiva nu conține un dump recognoscibil (.sql/.dump/.backup/.db/.sqlite/.sqlite3).");
         }
         return new ImportArchiveValidationReport(errors.isEmpty(), errors, entries, totalUnzipped);
     }
@@ -531,7 +530,7 @@ public class SettingsWebController {
         Path configDir = desktopHomeDir.resolve("config");
         Path runtimeModeFile = configDir.resolve("runtime-mode.properties");
         Path prodBase = defaultProdDatabaseFileBase;
-        Path devBase = desktopDataDir.resolve("ministryadmin-db-dev");
+        Path devBase = desktopDataDir.resolve("ministryadmin-dev.sqlite.db");
         Path selectedBase = RUNTIME_MODE_DEV.equals(mode) ? devBase : prodBase;
 
         try {
@@ -731,16 +730,12 @@ public class SettingsWebController {
         return String.join(",", seen);
     }
 
-    private boolean dbExists(Path dbFileBase) {
-        Path mv = dbFileBase.resolveSibling(dbFileBase.getFileName() + ".mv.db");
-        return Files.exists(mv);
+    private boolean dbExists(Path dbFile) {
+        return Files.exists(dbFile);
     }
 
     private void cloneDbFiles(Path fromBase, Path toBase) throws java.io.IOException {
-        copyIfExists(fromBase.resolveSibling(fromBase.getFileName() + ".mv.db"),
-                toBase.resolveSibling(toBase.getFileName() + ".mv.db"));
-        copyIfExists(fromBase.resolveSibling(fromBase.getFileName() + ".trace.db"),
-                toBase.resolveSibling(toBase.getFileName() + ".trace.db"));
+        copyIfExists(fromBase, toBase);
     }
 
     private void copyIfExists(Path from, Path to) throws java.io.IOException {
