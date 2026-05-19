@@ -6,8 +6,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import ro.church_office.info.groups.ChurchGroup;
 import ro.church_office.info.person.DAO.Person;
 
@@ -18,9 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "pastoral_follow_up")
 public class PastoralFollowUp {
     private Long id; private Long churchId;
-    @Transient
     private Person person;
-    @Transient
     private ChurchGroup group;
     private PastoralFollowUpStatus status = PastoralFollowUpStatus.OPEN;
     private LocalDate lastContactDate; private LocalDate nextContactDate; private String notes; private LocalDateTime updatedAt; private LocalDateTime createdAt = LocalDateTime.now();
@@ -29,9 +27,9 @@ public class PastoralFollowUp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long getId(){return id;} public void setId(Long id){this.id=id;}
     public Long getChurchId(){return churchId;} public void setChurchId(Long churchId){this.churchId=churchId;}
-    @Transient
+    @ManyToOne
     public Person getPerson(){return person;} public void setPerson(Person p){person=p;}
-    @Transient
+    @ManyToOne
     public ChurchGroup getGroup(){return group;} public void setGroup(ChurchGroup g){group=g;}
     @Enumerated(EnumType.STRING)
     public PastoralFollowUpStatus getStatus(){return status;} public void setStatus(PastoralFollowUpStatus s){status=s;}

@@ -6,8 +6,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import ro.church_office.info.person.DAO.Person;
 
 import java.util.LinkedHashSet;
@@ -20,9 +24,15 @@ public class ChurchGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; private Long churchId; private String name; private GroupType type = GroupType.SMALL_GROUP;
     private String description;
-    @Transient
+    @ManyToOne
+    @JoinColumn(name = "leader_id")
     private Person leader;
-    @Transient
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "church_group_members",
+            joinColumns = @JoinColumn(name = "group_id"),
+            inverseJoinColumns = @JoinColumn(name = "person_id")
+    )
     private Set<Person> members = new LinkedHashSet<>();
     public Long getId(){return id;} public void setId(Long id){this.id=id;} public Long getChurchId(){return churchId;} public void setChurchId(Long c){churchId=c;}
     public String getName(){return name;} public void setName(String n){name=n;}

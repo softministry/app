@@ -4,8 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import ro.church_office.info.person.DAO.Person;
 
 import java.time.LocalDate;
@@ -16,10 +16,10 @@ public class EventTask {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Transient
+    @ManyToOne
     private Event event;
     private String title; private String notes; private LocalDate dueDate; private String status; private Integer orderIndex;
-    @Transient
+    @ManyToOne
     private Person assignedTo;
     public Long getId(){return id;} public void setId(Long id){this.id=id;}
     public Event getEvent(){return event;} public void setEvent(Event e){event=e;}
