@@ -1,13 +1,26 @@
 package ro.church_office.info.events;
 
 public enum Priority {
-    LOW(1), MEDIUM(2), HIGH(3);
-    private final int value;
-    Priority(int value) { this.value = value; }
-    public int getValue() { return value; }
+    LOW,
+    MEDIUM_LOW,
+    MEDIUM,
+    HIGH_MEDIUM,
+    HIGH;
+    
+    public int getValue() { 
+        return ordinal() + 1;
+    }
+    
     public static Priority from(String value) {
         if (value == null) return MEDIUM;
-        for (Priority p : values()) if (p.name().equalsIgnoreCase(value)) return p;
+        for (Priority p : values()) {
+            if (p.name().equalsIgnoreCase(value)) return p;
+        }
         return MEDIUM;
+    }
+    
+    public static Priority fromValue(int value) {
+        if (value < 1 || value > values().length) return MEDIUM;
+        return values()[value - 1];
     }
 }

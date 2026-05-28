@@ -46,6 +46,7 @@ import ro.church_office.info.person.DAO.Person;
 import ro.church_office.info.person.DAO.PersonRepository;
 import ro.church_office.info.person.DTO.PersonDTO;
 import ro.church_office.info.person.service.PersonService;
+import ro.church_office.info.users.DAO.GlobalSettingRepository;
 import ro.church_office.teamleaf.security.CurrentUserService;
 import ro.church_office.info.visits.dao.Visit;
 import ro.church_office.info.visits.dao.VisitRepository;
@@ -57,6 +58,7 @@ public class PersonWebController {
     private static final DateTimeFormatter NOTE_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     private static final Set<String> NOTE_ROLE_OPTIONS = Set.of("ADMIN", "PASTOR", "ELDER", "GROUP_LEADER", "SECRETARY");
     private static final Set<String> NOTE_MANAGE_ROLES = Set.of("ADMIN", "PASTOR", "ELDER");
+    private static final String ROWS_KEY = "rows_per_page";
 
     private final PersonRepository personRepository;
     private final ChurchContextService churchContextService;
@@ -67,6 +69,7 @@ public class PersonWebController {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final VisitRepository visitRepository;
     private final CurrentUserService currentUserService;
+    private final GlobalSettingRepository globalSettingRepository;
 
     public PersonWebController(PersonRepository personRepository,
                                ChurchContextService churchContextService,
@@ -76,7 +79,8 @@ public class PersonWebController {
                                PastoralPrivateNoteRepository privateNoteRepository,
                                AttendanceRecordRepository attendanceRecordRepository,
                                VisitRepository visitRepository,
-                               CurrentUserService currentUserService) {
+                               CurrentUserService currentUserService,
+                               GlobalSettingRepository globalSettingRepository) {
         this.personRepository = personRepository;
         this.churchContextService = churchContextService;
         this.personService = personService;
@@ -86,13 +90,14 @@ public class PersonWebController {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.visitRepository = visitRepository;
         this.currentUserService = currentUserService;
+        this.globalSettingRepository = globalSettingRepository;
     }
 
     @GetMapping
     public String list(@RequestParam(value = "q", required = false) String q,
                        @RequestParam(value = "memberType", required = false) MemberType memberType,
                        @RequestParam(value = "page", defaultValue = "1") int page,
-                       @RequestParam(value = "size", defaultValue = "5") int size,
+                       @RequestParam(value = "size", required = false) Integer size,
                        @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                        Model model) {
         populateListModel(q, memberType, page, size, scrollOnly, model);
@@ -103,7 +108,7 @@ public class PersonWebController {
     public String listResults(@RequestParam(value = "q", required = false) String q,
                               @RequestParam(value = "memberType", required = false) MemberType memberType,
                               @RequestParam(value = "page", defaultValue = "1") int page,
-                              @RequestParam(value = "size", defaultValue = "5") int size,
+                              @RequestParam(value = "size", required = false) Integer size,
                               @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                               Model model) {
         populateListModel(q, memberType, page, size, scrollOnly, model);
@@ -113,7 +118,7 @@ public class PersonWebController {
     private void populateListModel(String q,
                                    MemberType memberType,
                                    int page,
-                                   int size,
+                                   Integer size,
                                    boolean scrollOnly,
                                    Model model) {
         Long churchId = churchContextService.getOrCreateActiveChurchId();
@@ -129,7 +134,8 @@ public class PersonWebController {
             persons = persons.stream().filter(p -> memberType.equals(p.getMemberType())).toList();
         }
 
-        int normalizedSize = normalizeSize(size);
+        int defaultSize = defaultRowsPerPage();
+        int normalizedSize = normalizeSize(size == null ? defaultSize : size);
         int totalItems = persons.size();
         int totalPages = scrollOnly ? 1 : Math.max(1, (int) Math.ceil((double) totalItems / normalizedSize));
         int currentPage = scrollOnly ? 1 : Math.min(Math.max(page, 1), totalPages);
@@ -144,10 +150,11 @@ public class PersonWebController {
         model.addAttribute("memberTypes", MemberType.values());
         model.addAttribute("page", currentPage);
         model.addAttribute("size", normalizedSize);
+        model.addAttribute("defaultSize", defaultSize);
         model.addAttribute("scrollOnly", scrollOnly);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSizes", List.of(5, 7, 10, 20, 50));
+        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
     }
 
     @GetMapping("/new")
@@ -347,9 +354,15 @@ public class PersonWebController {
 
     private int normalizeSize(int size) {
         return switch (size) {
-            case 5, 7, 10, 20, 50 -> size;
-            default -> 5;
+            case 5, 10, 20, 25, 50, 100 -> size;
+            default -> 10;
         };
+    }
+
+    private int defaultRowsPerPage() {
+        return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
+                .map(setting -> setting.getIntValue())
+                .orElse(5));
     }
 
     private Person saveOrUpdatePerson(Long id, PersonDTO dto) {

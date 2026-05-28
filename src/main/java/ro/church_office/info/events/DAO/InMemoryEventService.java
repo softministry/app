@@ -21,7 +21,11 @@ public class InMemoryEventService implements EventService {
 
     @Override
     public List<EventDTO> getAllEvents() {
-        return eventRepository.findAll().stream().map(EventDTO::fromEntity).toList();
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
+        return eventRepository.findAllByChurchId(churchId, org.springframework.data.domain.Sort.unsorted())
+                .stream()
+                .map(EventDTO::fromEntity)
+                .toList();
     }
 
     @Override
@@ -35,23 +39,28 @@ public class InMemoryEventService implements EventService {
 
     @Override
     public void updateEvent(Event event) {
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
         if (event.getChurchId() == null) {
-            event.setChurchId(churchContextService.getOrCreateActiveChurchId());
+            event.setChurchId(churchId);
         }
-        eventRepository.save(event);
+        if (churchId.equals(event.getChurchId())) {
+            eventRepository.save(event);
+        }
     }
 
     @Override
     public void deleteEventById(Long id) {
-        eventRepository.deleteById(id);
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
+        eventRepository.findByIdAndChurchId(id, churchId).ifPresent(eventRepository::delete);
     }
 
     @Override
     public void moveEvent(Long id, EventMigrationDTO dto) {
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
         if (id == null || dto == null || dto.getTargetChurchId() == null) {
             return;
         }
-        eventRepository.findById(id).ifPresent(event -> {
+        eventRepository.findByIdAndChurchId(id, churchId).ifPresent(event -> {
             event.setChurchId(dto.getTargetChurchId());
             if (Boolean.TRUE.equals(dto.getClearImplementedBy())) {
                 event.setImplementedBy(null);

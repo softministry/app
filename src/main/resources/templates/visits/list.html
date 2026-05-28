@@ -55,6 +55,23 @@
     </tr>
     </tbody>
   </table>
+
+  <div class="pagination-bar">
+    <a class="link-button" th:if="${page > 1}"
+       th:href="@{/visits(size=${size != defaultSize ? size : null},page=${page - 1})}"
+       data-i18n="pagination.previous">Anterior</a>
+    <span class="pagination-info"
+          th:text="${'Pagina ' + page + ' din ' + totalPages + ' (' + totalItems + ' înregistrări)'}"></span>
+    <a class="link-button" th:if="${page < totalPages}"
+       th:href="@{/visits(size=${size != defaultSize ? size : null},page=${page + 1})}"
+       data-i18n="pagination.next">Următor</a>
+    <form method="get" th:action="@{/visits}" class="pagination-controls">
+      <input type="hidden" name="page" value="1" />
+      <select name="size" onchange="this.form.submit()" aria-label="Număr rânduri">
+        <option th:each="pageSize : ${pageSizes}" th:value="${pageSize}" th:text="${pageSize}" th:selected="${size == pageSize}"></option>
+      </select>
+    </form>
+  </div>
 </div>
 </body>
 </html>

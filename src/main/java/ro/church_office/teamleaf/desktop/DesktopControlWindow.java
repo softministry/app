@@ -15,6 +15,7 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -88,6 +89,7 @@ public final class DesktopControlWindow {
     private JLabel updateDetail;
     private JProgressBar progressBar;
     private Timer startupProgressTimer;
+    private Timer progressCompletionTimer;
     private int startupProgress;
     private JButton primaryActionButton;
     private LogViewerWindow logViewerWindow;
@@ -103,12 +105,12 @@ public final class DesktopControlWindow {
 
     private void createAndShow() {
         frame = new JFrame("Church Administration Platform");
+        frame.setUndecorated(true);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.setMinimumSize(new Dimension(600, 360));
-        frame.setSize(680, 420);
+        frame.setMinimumSize(new Dimension(520, 112));
+        frame.setSize(560, 112);
         frame.setLocationRelativeTo(null);
         frame.setIconImages(loadIconImages());
-        frame.setJMenuBar(buildMenuBar());
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -116,7 +118,13 @@ public final class DesktopControlWindow {
             }
         });
 
-        frame.setContentPane(buildContent());
+        // Create main container with custom title bar
+        JPanel mainContainer = new JPanel(new BorderLayout());
+        CustomTitleBar titleBar = new CustomTitleBar(frame, "Church Administration Platform");
+        mainContainer.add(titleBar, BorderLayout.NORTH);
+        mainContainer.add(buildContent(), BorderLayout.CENTER);
+        
+        frame.setContentPane(mainContainer);
         setStopped();
         frame.setVisible(true);
         startApplication();
@@ -138,17 +146,16 @@ public final class DesktopControlWindow {
     private JPanel buildContent() {
         JPanel root = new BackgroundPanel();
         root.setLayout(new BorderLayout());
-        root.add(new HeaderPanel(), BorderLayout.NORTH);
 
         JPanel body = new JPanel(new GridBagLayout());
         body.setOpaque(false);
-        body.setBorder(BorderFactory.createEmptyBorder(22, 22, 22, 22));
+        body.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
 
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER),
-                BorderFactory.createEmptyBorder(18, 18, 18, 18)));
+                BorderFactory.createLineBorder(new Color(186, 204, 255)),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)));
 
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
@@ -159,42 +166,28 @@ public final class DesktopControlWindow {
         c.insets = new Insets(0, 0, 8, 0);
 
         JLabel title = new JLabel("Pornire aplicatie");
-        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
+        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         title.setForeground(BRAND_DARK);
         card.add(title, c);
 
         c.gridy++;
-        c.insets = new Insets(0, 0, 10, 0);
+        c.insets = new Insets(0, 0, 6, 0);
         statusDetail = infoLabel("");
         card.add(statusDetail, c);
 
         c.gridy++;
-        c.insets = new Insets(0, 0, 14, 0);
-        updateDetail = infoLabel("");
-        updateDetail.setForeground(MUTED);
-        updateDetail.setVisible(false);
-        card.add(updateDetail, c);
-
-        c.gridy++;
-        c.insets = new Insets(0, 0, 14, 0);
-        progressBar = new JProgressBar();
+        c.insets = new Insets(0, 0, 0, 0);
+        progressBar = new SmoothProgressBar();
         progressBar.setMinimum(0);
         progressBar.setMaximum(100);
         progressBar.setValue(0);
-        progressBar.setStringPainted(true);
-        progressBar.setString(startupProgressMessage(0));
+        progressBar.setStringPainted(false);
         progressBar.setVisible(false);
         progressBar.setBorderPainted(false);
-        progressBar.setPreferredSize(new Dimension(10, 22));
+        progressBar.setForeground(new Color(29, 78, 216));
+        progressBar.setBackground(new Color(219, 234, 254));
+        progressBar.setPreferredSize(new Dimension(10, 11));
         card.add(progressBar, c);
-
-        c.gridy++;
-        c.insets = new Insets(0, 0, 0, 0);
-        primaryActionButton = button("Start", BRAND, Color.WHITE);
-        primaryActionButton.addActionListener(event -> onPrimaryAction());
-        c.fill = GridBagConstraints.NONE;
-        c.anchor = GridBagConstraints.CENTER;
-        card.add(primaryActionButton, c);
 
         GridBagConstraints bodyConstraints = new GridBagConstraints();
         bodyConstraints.gridx = 0;
@@ -239,7 +232,7 @@ public final class DesktopControlWindow {
 
     private JLabel infoLabel(String text) {
         JLabel label = new JLabel(text, SwingConstants.LEFT);
-        label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
         label.setForeground(BRAND_DARK);
         return label;
     }
@@ -348,43 +341,35 @@ public final class DesktopControlWindow {
         progressBar.setVisible(true);
         progressBar.setIndeterminate(false);
         progressBar.setValue(0);
-        progressBar.setString(startupProgressMessage(0));
         beginStartupProgress();
-        primaryActionButton.setText("Loading...");
-        primaryActionButton.setBackground(new Color(180, 83, 9));
-        primaryActionButton.setEnabled(false);
-        resizePrimaryActionButton();
+        setPrimaryButtonState("Loading...", new Color(180, 83, 9), false);
     }
 
     private void setRunning() {
-        completeStartupProgress();
+        completeStartupProgressSmooth(this::finishStartupAndCloseSplash);
+    }
+
+    private void finishStartupAndCloseSplash() {
         setStatus("RULEAZA", SUCCESS, "Aplicatia ruleaza. Dashboard-ul este disponibil la " + dashboardUrl() + ".");
         progressBar.setVisible(false);
-        primaryActionButton.setText("Opreste aplicatia");
-        primaryActionButton.setBackground(new Color(153, 27, 27));
-        primaryActionButton.setEnabled(true);
-        resizePrimaryActionButton();
+        setPrimaryButtonState("Opreste aplicatia", new Color(153, 27, 27), true);
         openBrowser();
+        // Minimize window after opening browser
+        SwingUtilities.invokeLater(() -> frame.setState(JFrame.ICONIFIED));
     }
 
     private void setStopping() {
         stopStartupProgress();
         setStatus("OPRIRE", WARNING, "Aplicatia se opreste.");
         progressBar.setVisible(false);
-        primaryActionButton.setText("Loading...");
-        primaryActionButton.setBackground(new Color(180, 83, 9));
-        primaryActionButton.setEnabled(false);
-        resizePrimaryActionButton();
+        setPrimaryButtonState("Loading...", new Color(180, 83, 9), false);
     }
 
     private void setStopped() {
         stopStartupProgress();
         setStatus("OPRIT", MUTED, "Aplicatia este oprita. Apasa Start pentru a porni serverul local.");
         progressBar.setVisible(false);
-        primaryActionButton.setText("Porneste aplicatie");
-        primaryActionButton.setBackground(BRAND);
-        primaryActionButton.setEnabled(true);
-        resizePrimaryActionButton();
+        setPrimaryButtonState("Porneste aplicatie", BRAND, true);
     }
 
     private void setFailed(Exception ex) {
@@ -398,10 +383,7 @@ public final class DesktopControlWindow {
             String message = translateErrorMessage(ex);
             setStatus("EROARE", DANGER, message);
             progressBar.setVisible(false);
-            primaryActionButton.setText("Porneste aplicatie");
-            primaryActionButton.setBackground(BRAND);
-            primaryActionButton.setEnabled(true);
-            resizePrimaryActionButton();
+            setPrimaryButtonState("Porneste aplicatie", BRAND, true);
             
             // Show detailed error dialog
             showErrorDialog("Eroare la pornirea aplicației", message, ex);
@@ -457,10 +439,7 @@ public final class DesktopControlWindow {
     private void handlePortInUseError(String message) {
         setStatus("EROARE", WARNING, message);
         progressBar.setVisible(false);
-        primaryActionButton.setText("Încearcă din nou");
-        primaryActionButton.setBackground(BRAND);
-        primaryActionButton.setEnabled(true);
-        resizePrimaryActionButton();
+        setPrimaryButtonState("Încearcă din nou", BRAND, true);
         
         // Show friendly dialog with options
         SwingUtilities.invokeLater(() -> {
@@ -485,6 +464,9 @@ public final class DesktopControlWindow {
     }
 
     private void resizePrimaryActionButton() {
+        if (primaryActionButton == null) {
+            return;
+        }
         String text = primaryActionButton.getText();
         int width = 28 + primaryActionButton.getFontMetrics(primaryActionButton.getFont()).stringWidth(text);
         primaryActionButton.setPreferredSize(new Dimension(width, 30));
@@ -495,6 +477,17 @@ public final class DesktopControlWindow {
             primaryActionButton.getParent().repaint();
         }
     }
+
+    private void setPrimaryButtonState(String text, Color background, boolean enabled) {
+        if (primaryActionButton == null) {
+            return;
+        }
+        primaryActionButton.setText(text);
+        primaryActionButton.setBackground(background);
+        primaryActionButton.setEnabled(enabled);
+        resizePrimaryActionButton();
+    }
+
 
     /**
      * Translates common Spring Boot error messages to Romanian.
@@ -721,11 +714,13 @@ public final class DesktopControlWindow {
     private void beginStartupProgress() {
         stopStartupProgress();
         startupProgress = 0;
-        startupProgressTimer = new Timer(450, event -> {
-            if (startupProgress < 70) {
-                startupProgress += 5;
-            } else if (startupProgress < 90) {
-                startupProgress += 2;
+        startupProgressTimer = new Timer(45, event -> {
+            if (startupProgress < 68) {
+                startupProgress += 1;
+            } else if (startupProgress < 86) {
+                startupProgress += 1;
+            } else if (startupProgress < 93) {
+                startupProgress += 1;
             }
             updateStartupProgress(startupProgress);
         });
@@ -737,10 +732,35 @@ public final class DesktopControlWindow {
         updateStartupProgress(100);
     }
 
+    private void completeStartupProgressSmooth(Runnable onDone) {
+        stopStartupProgress();
+        if (progressCompletionTimer != null) {
+            progressCompletionTimer.stop();
+            progressCompletionTimer = null;
+        }
+        progressCompletionTimer = new Timer(20, event -> {
+            if (startupProgress >= 100) {
+                progressCompletionTimer.stop();
+                progressCompletionTimer = null;
+                if (onDone != null) {
+                    onDone.run();
+                }
+                return;
+            }
+            int step = startupProgress < 92 ? 2 : 1;
+            updateStartupProgress(Math.min(100, startupProgress + step));
+        });
+        progressCompletionTimer.start();
+    }
+
     private void stopStartupProgress() {
         if (startupProgressTimer != null) {
             startupProgressTimer.stop();
             startupProgressTimer = null;
+        }
+        if (progressCompletionTimer != null) {
+            progressCompletionTimer.stop();
+            progressCompletionTimer = null;
         }
     }
 
@@ -932,10 +952,32 @@ public final class DesktopControlWindow {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setPaint(new GradientPaint(0, 0, new Color(241, 245, 249), 0, getHeight(), new Color(226, 232, 240)));
-            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setPaint(new GradientPaint(0, 0, new Color(239, 246, 255), getWidth(), getHeight(), new Color(224, 242, 254)));
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 24, 24);
             g2.dispose();
             super.paintComponent(g);
+        }
+    }
+
+    private static final class SmoothProgressBar extends JProgressBar {
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int w = getWidth();
+            int h = getHeight();
+            int arc = Math.max(8, h);
+            g2.setColor(getBackground());
+            g2.fillRoundRect(0, 0, w, h, arc, arc);
+
+            int fill = (int) Math.round(w * (getPercentComplete() <= 0 ? 0 : getPercentComplete()));
+            if (fill > 0) {
+                GradientPaint gp = new GradientPaint(0, 0, new Color(56, 189, 248), fill, 0, new Color(37, 99, 235));
+                g2.setPaint(gp);
+                g2.fillRoundRect(0, 0, fill, h, arc, arc);
+            }
+            g2.dispose();
         }
     }
 

@@ -59,6 +59,12 @@
     selectedContainer.classList.toggle('is-empty', selected.length === 0);
     selectedContainer.innerHTML = '';
 
+    // Update hidden validation input
+    const validationInput = document.querySelector('[data-member-validation]');
+    if (validationInput) {
+      validationInput.value = selected.length > 0 ? 'valid' : '';
+    }
+
     if (selected.length === 0) {
       const empty = document.createElement('span');
       empty.className = 'muted';
@@ -160,13 +166,25 @@
 
     const isEdit = mode === 'edit';
     groupForm.action = isEdit ? `/groups/${data.id}` : '/groups';
+    groupForm.method = 'post';
+    
     if (groupTitle) groupTitle.textContent = isEdit ? translated('actions.edit', 'Editează') : translated('groups.add', 'Adaugă grup');
     if (groupSubmitButton) groupSubmitButton.textContent = isEdit ? translated('actions.save', 'Salvează') : translated('actions.create', 'Creează');
     if (groupIdField) groupIdField.value = isEdit ? data.id : '';
     if (groupNameField) groupNameField.value = isEdit ? data.name : '';
-    if (groupTypeField) groupTypeField.value = isEdit ? data.type : 'SMALL_GROUP';
-    if (groupLeaderField) groupLeaderField.value = isEdit ? data.leaderId : '';
-    if (groupDescriptionField) groupDescriptionField.value = isEdit ? data.description : '';
+    if (groupTypeField) {
+      if (isEdit && data.type) {
+        groupTypeField.value = data.type;
+      } else {
+        // For new groups, select first valid option (skip empty placeholder)
+        const firstValidOption = Array.from(groupTypeField.options).find(opt => opt.value !== '');
+        if (firstValidOption) {
+          groupTypeField.value = firstValidOption.value;
+        }
+      }
+    }
+    if (groupLeaderField) groupLeaderField.value = isEdit && data.leaderId ? data.leaderId : '';
+    if (groupDescriptionField) groupDescriptionField.value = isEdit && data.description ? data.description : '';
 
     searchInput.value = '';
     setSelectedMemberIds(isEdit && data.memberIds ? data.memberIds.split(',').filter(Boolean) : []);
@@ -263,6 +281,8 @@
   groupFormCloseButtons.forEach((button) => {
     button.addEventListener('click', closeGroupForm);
   });
+
+
 
   refresh();
 })();

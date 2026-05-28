@@ -2,11 +2,11 @@
   var configs = {
     "/events": {
       key: "church-office-table-prefs:events",
-      params: ["size", "scrollOnly", "sort"]
+      params: ["scrollOnly", "sort"]
     },
     "/persons": {
       key: "church-office-table-prefs:persons",
-      params: ["size", "scrollOnly"]
+      params: ["scrollOnly"]
     }
   };
 
@@ -114,7 +114,20 @@
     });
   }
 
+  function purgeLegacySizePrefs() {
+    ["church-office-table-prefs:events", "church-office-table-prefs:persons"].forEach(function (key) {
+      try {
+        var prefs = JSON.parse(window.localStorage.getItem(key) || "{}");
+        if ("size" in prefs) {
+          delete prefs["size"];
+          window.localStorage.setItem(key, JSON.stringify(prefs));
+        }
+      } catch (ignored) {}
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    purgeLegacySizePrefs();
     var config = configForPath(window.location.pathname);
     if (!config) return;
 

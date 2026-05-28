@@ -13,6 +13,7 @@ import ro.church_office.info.person.DAO.Person;
 import ro.church_office.info.person.DAO.PersonRepository;
 import ro.church_office.info.person.DTO.PersonDTO;
 import ro.church_office.info.person.service.PersonService;
+import ro.church_office.info.users.DAO.GlobalSettingRepository;
 import ro.church_office.info.visits.dao.VisitRepository;
 import ro.church_office.teamleaf.security.CurrentUserService;
 
@@ -43,6 +44,7 @@ class PersonWebControllerTest {
     private final AttendanceRecordRepository attendanceRecordRepository = mock(AttendanceRecordRepository.class);
     private final VisitRepository visitRepository = mock(VisitRepository.class);
     private final CurrentUserService currentUserService = mock(CurrentUserService.class);
+    private final GlobalSettingRepository globalSettingRepository = mock(GlobalSettingRepository.class);
 
     private PersonWebController controller() {
         when(churchContextService.getOrCreateActiveChurchId()).thenReturn(1L);
@@ -55,7 +57,8 @@ class PersonWebControllerTest {
                 privateNoteRepository,
                 attendanceRecordRepository,
                 visitRepository,
-                currentUserService);
+                currentUserService,
+                globalSettingRepository);
     }
 
     @Test

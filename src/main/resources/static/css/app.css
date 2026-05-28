@@ -652,6 +652,12 @@ body {
   background: #f3f6fb;
 }
 
+.church-select-option-add {
+  transform: scale(0.9);
+  transform-origin: left center;
+  font: inherit;
+}
+
 .church-select-option.is-active {
   background: var(--theme-soft);
   color: var(--theme-primary-strong);
@@ -682,6 +688,14 @@ body {
   font-size: 1rem;
   background: #eef2f7;
   color: #64748b;
+}
+
+.church-option-add-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 1.5rem;
+  margin-left: 0;
+  transform: translateX(-18%);
 }
 
 .church-option-name {
@@ -741,6 +755,12 @@ body {
 .password-reminder-toast .header-toast-action-btn.done {
   border-color: #60a5fa;
   color: #1e40af;
+}
+
+.required-indicator {
+  color: #dc2626;
+  font-weight: 600;
+  margin-left: 0.15rem;
 }
 
 .field-error {
@@ -1187,6 +1207,49 @@ body {
 .calendar-event-card.priority-low {
   background: #e0f2fe;
   border-left-color: #0284c7;
+}
+
+.calendar-context-menu {
+  position: absolute;
+  z-index: 2500;
+  min-width: 114px;
+  padding: 0.35rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
+}
+
+.calendar-context-menu-edit,
+.calendar-context-menu-delete {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #374151;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.calendar-context-menu-edit:hover {
+  background: #f3f6fb;
+}
+
+.calendar-context-menu-separator {
+  height: 1px;
+  margin: 0.28rem 0.15rem;
+  background: #e5e7eb;
+}
+
+.calendar-context-menu-delete {
+  color: #b91c1c;
+}
+
+.calendar-context-menu-delete:hover {
+  background: #fef2f2;
 }
 
 .settings-shell {

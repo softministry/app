@@ -2,27 +2,34 @@ package ro.church_office.info.church;
 
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Service
 public class InMemoryChurchContextService implements ChurchContextService {
 
-    private final AtomicLong activeChurchId = new AtomicLong(1L);
+    private final ChurchInfoService churchInfoService;
+
+    public InMemoryChurchContextService(ChurchInfoService churchInfoService) {
+        this.churchInfoService = churchInfoService;
+    }
 
     @Override
     public Long currentChurchId() {
-        return activeChurchId.get();
+        return resolveChurchId();
     }
 
     @Override
     public Long getOrCreateActiveChurchId() {
-        return activeChurchId.get();
+        return resolveChurchId();
     }
 
     @Override
     public void setActiveChurchId(Long churchId) {
         if (churchId != null) {
-            activeChurchId.set(churchId);
+            churchInfoService.setDefaultChurchId(churchId);
         }
+    }
+
+    private Long resolveChurchId() {
+        Long churchId = churchInfoService.getDefaultChurchId();
+        return churchId == null ? 1L : churchId;
     }
 }

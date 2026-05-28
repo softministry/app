@@ -54,9 +54,17 @@ public final class MinistryAdminLauncher {
     }
 
     private void buildUi() {
+        frame.setUndecorated(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout(8, 8));
-
+        
+        // Create main container with custom title bar
+        JPanel mainContainer = new JPanel(new BorderLayout());
+        CustomTitleBar titleBar = new CustomTitleBar(frame, "Church Administration Platform Launcher");
+        mainContainer.add(titleBar, BorderLayout.NORTH);
+        
+        // Create content panel
+        JPanel contentPanel = new JPanel(new BorderLayout(8, 8));
+        
         logs.setEditable(false);
         logs.setLineWrap(true);
         logs.setWrapStyleWord(true);
@@ -71,14 +79,17 @@ public final class MinistryAdminLauncher {
         actions.add(browserButton);
         top.add(actions, BorderLayout.SOUTH);
 
-        frame.add(top, BorderLayout.NORTH);
-        frame.add(new JScrollPane(logs), BorderLayout.CENTER);
+        contentPanel.add(top, BorderLayout.NORTH);
+        contentPanel.add(new JScrollPane(logs), BorderLayout.CENTER);
+        
+        mainContainer.add(contentPanel, BorderLayout.CENTER);
+        frame.setContentPane(mainContainer);
 
         startButton.addActionListener(e -> startServer());
         stopButton.addActionListener(e -> stopServer());
         browserButton.addActionListener(e -> openBrowser());
 
-        frame.setSize(980, 560);
+        frame.setSize(980, 588);
         frame.setLocationRelativeTo(null);
         refreshButtons();
     }

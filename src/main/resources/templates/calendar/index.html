@@ -52,6 +52,7 @@
         <div class="calendar-events">
           <a th:each="occurrence : ${day.events}"
              th:href="@{'/events/' + ${occurrence.event.id} + '/edit'}"
+             th:attr="data-delete-url=@{'/events/' + ${occurrence.event.id} + '/delete'}"
              class="calendar-event-card"
              th:classappend="${occurrence.event.priority != null} ? ' priority-' + ${#strings.toLowerCase(occurrence.event.priority)} : ''"
              th:title="${occurrence.event.eventName + (occurrence.event.implementedBy != null ? ' • ' + occurrence.event.implementedBy.fullName : '')}">
@@ -63,8 +64,73 @@
     </th:block>
   </section>
 </div>
+<div id="calendar-event-context-menu" class="calendar-context-menu" hidden>
+  <button type="button" class="calendar-context-menu-edit">Modifică</button>
+  <div class="calendar-context-menu-separator" aria-hidden="true"></div>
+  <button type="button" class="calendar-context-menu-delete">Șterge</button>
+</div>
 <script>
   (function () {
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || '';
+    const csrfParam = document.querySelector('meta[name="_csrf_parameter"]')?.getAttribute('content') || '_csrf';
+    const contextMenu = document.getElementById('calendar-event-context-menu');
+    const contextEditBtn = contextMenu ? contextMenu.querySelector('.calendar-context-menu-edit') : null;
+    const contextDeleteBtn = contextMenu ? contextMenu.querySelector('.calendar-context-menu-delete') : null;
+    let selectedEditUrl = null;
+    let selectedDeleteUrl = null;
+
+    function hideContextMenu() {
+      if (!contextMenu) return;
+      contextMenu.hidden = true;
+      selectedEditUrl = null;
+      selectedDeleteUrl = null;
+    }
+
+    function placeContextMenu(anchorElement) {
+      if (!contextMenu) return;
+      const padding = 10;
+      const offset = 6;
+      contextMenu.style.left = '0px';
+      contextMenu.style.top = '0px';
+      contextMenu.hidden = false;
+
+      const menuWidth = contextMenu.offsetWidth;
+      const menuHeight = contextMenu.offsetHeight;
+      const rect = anchorElement.getBoundingClientRect();
+      const preferredTop = window.scrollY + rect.bottom + offset;
+
+      const maxLeft = window.scrollX + window.innerWidth - menuWidth - padding;
+      const preferredLeft = window.scrollX + rect.left + 10;
+      const left = Math.max(window.scrollX + padding, Math.min(preferredLeft, maxLeft));
+      const top = Math.max(window.scrollY + padding, preferredTop);
+
+      contextMenu.style.left = left + 'px';
+      contextMenu.style.top = top + 'px';
+    }
+
+    function submitDelete(url) {
+      if (!url) return;
+      if (!window.confirm('Sigur vrei să ștergi acest eveniment?')) return;
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      const form = document.createElement('form');
+      form.method = 'post';
+      form.action = url;
+      const redirectInput = document.createElement('input');
+      redirectInput.type = 'hidden';
+      redirectInput.name = 'redirect';
+      redirectInput.value = currentPath;
+      form.appendChild(redirectInput);
+      if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = csrfParam;
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    }
+
     if (window.location.hash === '#today-cell') {
       const todayCell = document.getElementById('today-cell');
       if (todayCell) {
@@ -77,6 +143,7 @@
     const cells = document.querySelectorAll('.calendar-cell[data-create-url]');
     cells.forEach((cell) => {
       cell.addEventListener('click', (event) => {
+        hideContextMenu();
         if (event.target.closest('a.calendar-event-card')) {
           return;
         }
@@ -85,6 +152,44 @@
           window.location.href = createUrl;
         }
       });
+    });
+
+    const eventCards = document.querySelectorAll('.calendar-event-card[data-delete-url]');
+    eventCards.forEach((card) => {
+      card.addEventListener('contextmenu', (event) => {
+        if (!contextMenu) return;
+        event.preventDefault();
+        selectedEditUrl = card.getAttribute('href');
+        selectedDeleteUrl = card.getAttribute('data-delete-url');
+        placeContextMenu(card);
+      });
+    });
+
+    if (contextEditBtn) {
+      contextEditBtn.addEventListener('click', () => {
+        const url = selectedEditUrl;
+        hideContextMenu();
+        if (url) {
+          window.location.href = url;
+        }
+      });
+    }
+
+    if (contextDeleteBtn) {
+      contextDeleteBtn.addEventListener('click', () => {
+        const url = selectedDeleteUrl;
+        hideContextMenu();
+        submitDelete(url);
+      });
+    }
+
+    document.addEventListener('click', hideContextMenu);
+    document.addEventListener('scroll', hideContextMenu, true);
+    window.addEventListener('resize', hideContextMenu);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hideContextMenu();
+      }
     });
   })();
 </script>

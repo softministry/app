@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ro.church_office.info.church.ChurchContextService;
+import ro.church_office.info.users.DAO.GlobalSettingRepository;
 import ro.church_office.info.visits.VisitDTO;
 import ro.church_office.info.visits.VisitService;
 import ro.church_office.info.visits.dao.Visit;
@@ -22,23 +24,58 @@ import ro.church_office.info.visits.dao.Visit;
 @RequestMapping("/visits")
 public class VisitWebController {
 
+    private static final String ROWS_KEY = "rows_per_page";
+
     private final ChurchContextService churchContextService;
     private final VisitService visitService;
+    private final GlobalSettingRepository globalSettingRepository;
 
     public VisitWebController(ChurchContextService churchContextService,
-                              VisitService visitService) {
+                              VisitService visitService,
+                              GlobalSettingRepository globalSettingRepository) {
         this.churchContextService = churchContextService;
         this.visitService = visitService;
+        this.globalSettingRepository = globalSettingRepository;
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(@RequestParam(value = "page", defaultValue = "1") int page,
+                       @RequestParam(value = "size", required = false) Integer size,
+                       Model model) {
         Long churchId = churchContextService.getOrCreateActiveChurchId();
-        List<VisitDTO> visits = visitService.getAllVisits(churchId).stream()
+        List<VisitDTO> allVisits = visitService.getAllVisits(churchId).stream()
                 .map(VisitDTO::new)
                 .toList();
-        model.addAttribute("visits", visits);
+
+        int defaultSize = defaultRowsPerPage();
+        int normalizedSize = normalizeSize(size == null ? defaultSize : size);
+        int totalItems = allVisits.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / normalizedSize));
+        int currentPage = Math.min(Math.max(page, 1), totalPages);
+        int fromIndex = Math.min((currentPage - 1) * normalizedSize, totalItems);
+        int toIndex = Math.min(fromIndex + normalizedSize, totalItems);
+
+        model.addAttribute("visits", allVisits.subList(fromIndex, toIndex));
+        model.addAttribute("page", currentPage);
+        model.addAttribute("size", normalizedSize);
+        model.addAttribute("defaultSize", defaultSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
         return "visits/list";
+    }
+
+    private int normalizeSize(int size) {
+        return switch (size) {
+            case 5, 10, 20, 25, 50, 100 -> size;
+            default -> 10;
+        };
+    }
+
+    private int defaultRowsPerPage() {
+        return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
+                .map(setting -> setting.getIntValue())
+                .orElse(5));
     }
 
     @GetMapping("/new")

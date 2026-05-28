@@ -90,7 +90,7 @@
       <th>
         <a class="sort-header"
            th:classappend="${sort == 'nameAsc' or sort == 'nameDesc'} ? ' is-active'"
-           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'nameAsc' ? 'nameDesc' : 'nameAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'nameAsc' ? 'nameDesc' : 'nameAsc'},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=1)}"
            data-partial-link
            data-partial-endpoint="/events/results"
            data-partial-target="[data-events-results]">
@@ -102,7 +102,7 @@
       <th>
         <a class="sort-header"
            th:classappend="${sort == 'statusAsc' or sort == 'statusDesc'} ? ' is-active'"
-           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'statusAsc' ? 'statusDesc' : 'statusAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'statusAsc' ? 'statusDesc' : 'statusAsc'},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=1)}"
            data-partial-link
            data-partial-endpoint="/events/results"
            data-partial-target="[data-events-results]">
@@ -114,7 +114,7 @@
       <th>
         <a class="sort-header"
            th:classappend="${sort == 'priorityAsc' or sort == 'priorityDesc'} ? ' is-active'"
-           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'priorityAsc' ? 'priorityDesc' : 'priorityAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'priorityAsc' ? 'priorityDesc' : 'priorityAsc'},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=1)}"
            data-partial-link
            data-partial-endpoint="/events/results"
            data-partial-target="[data-events-results]">
@@ -128,7 +128,7 @@
       <th class="period-column">
         <a class="sort-header"
            th:classappend="${sort == 'openDateAsc' or sort == 'openDateDesc'} ? ' is-active'"
-           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'openDateAsc' ? 'openDateDesc' : 'openDateAsc'},size=${size},scrollOnly=${scrollOnly},page=1)}"
+           th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort == 'openDateAsc' ? 'openDateDesc' : 'openDateAsc'},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=1)}"
            data-partial-link
            data-partial-endpoint="/events/results"
            data-partial-target="[data-events-results]">
@@ -207,7 +207,7 @@
 
   <div class="pagination-bar">
     <a class="link-button" th:if="${!scrollOnly and page > 1}"
-       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size},scrollOnly=${scrollOnly},page=${page - 1})}"
+       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=${page - 1})}"
        data-partial-link
        data-partial-endpoint="/events/results"
        data-partial-target="[data-events-results]">Anterior</a>
@@ -220,7 +220,7 @@
           data-i18n-template="events.paginationInfoPaged"
           th:attr="data-i18n-param-page=${page},data-i18n-param-totalPages=${totalPages},data-i18n-param-totalItems=${totalItems}"></span>
     <a class="link-button" th:if="${!scrollOnly and page < totalPages}"
-       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size},scrollOnly=${scrollOnly},page=${page + 1})}"
+       th:href="@{/events(q=${q},status=${status},eventType=${eventType},groupId=${groupId},sort=${sort},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=${page + 1})}"
        data-partial-link
        data-partial-endpoint="/events/results"
        data-partial-target="[data-events-results]">Următor</a>

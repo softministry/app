@@ -32,6 +32,7 @@ import ro.church_office.info.person.DAO.Person;
 import ro.church_office.info.person.DAO.PersonRepository;
 import ro.church_office.info.person.DTO.PersonDTO;
 import ro.church_office.info.person.service.PersonService;
+import ro.church_office.info.users.DAO.GlobalSettingRepository;
 
 import java.util.Optional;
 
@@ -39,6 +40,7 @@ import java.util.Optional;
 @RequestMapping("/events")
 public class EventWebController {
     private static final Logger log = LoggerFactory.getLogger(EventWebController.class);
+    private static final String ROWS_KEY = "rows_per_page";
 
     private final EventService eventService;
     private final PersonService personService;
@@ -48,6 +50,7 @@ public class EventWebController {
     private final ChurchContextService churchContextService;
     private final ChurchInfoService churchInfoService;
     private final ChurchGroupRepository groupRepository;
+    private final GlobalSettingRepository globalSettingRepository;
 
     public EventWebController(EventService eventService,
                               PersonService personService,
@@ -56,7 +59,8 @@ public class EventWebController {
                               PersonRepository personRepository,
                               ChurchContextService churchContextService,
                               ChurchInfoService churchInfoService,
-                              ChurchGroupRepository groupRepository) {
+                              ChurchGroupRepository groupRepository,
+                              GlobalSettingRepository globalSettingRepository) {
         this.eventService = eventService;
         this.personService = personService;
         this.eventRepository = eventRepository;
@@ -65,6 +69,7 @@ public class EventWebController {
         this.churchContextService = churchContextService;
         this.churchInfoService = churchInfoService;
         this.groupRepository = groupRepository;
+        this.globalSettingRepository = globalSettingRepository;
     }
 
     @GetMapping
@@ -74,7 +79,7 @@ public class EventWebController {
                        @RequestParam(value = "groupId", required = false) Long groupId,
                        @RequestParam(value = "sort", defaultValue = "openDateAsc") String sort,
                        @RequestParam(value = "page", defaultValue = "1") int page,
-                       @RequestParam(value = "size", defaultValue = "20") int size,
+                       @RequestParam(value = "size", required = false) Integer size,
                        @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                        Model model) {
         populateListModel(q, status, eventType, groupId, sort, page, size, scrollOnly, model);
@@ -89,7 +94,7 @@ public class EventWebController {
                               @RequestParam(value = "groupId", required = false) Long groupId,
                               @RequestParam(value = "sort", defaultValue = "openDateAsc") String sort,
                               @RequestParam(value = "page", defaultValue = "1") int page,
-                              @RequestParam(value = "size", defaultValue = "20") int size,
+                              @RequestParam(value = "size", required = false) Integer size,
                               @RequestParam(value = "scrollOnly", defaultValue = "false") boolean scrollOnly,
                               Model model) {
         populateListModel(q, status, eventType, groupId, sort, page, size, scrollOnly, model);
@@ -103,7 +108,7 @@ public class EventWebController {
                                    Long groupId,
                                    String sort,
                                    int page,
-                                   int size,
+                                   Integer size,
                                    boolean scrollOnly,
                                    Model model) {
         List<EventDTO> events = eventService.getAllEvents().stream()
@@ -111,7 +116,8 @@ public class EventWebController {
                 .sorted(comparatorFor(sort))
                 .toList();
 
-        int normalizedSize = normalizeSize(size);
+        int defaultSize = defaultRowsPerPage();
+        int normalizedSize = normalizeSize(size == null ? defaultSize : size);
         int totalItems = events.size();
         int totalPages = scrollOnly ? 1 : Math.max(1, (int) Math.ceil((double) totalItems / normalizedSize));
         int currentPage = scrollOnly ? 1 : Math.min(Math.max(page, 1), totalPages);
@@ -126,10 +132,11 @@ public class EventWebController {
         model.addAttribute("sort", sort);
         model.addAttribute("page", currentPage);
         model.addAttribute("size", normalizedSize);
+        model.addAttribute("defaultSize", defaultSize);
         model.addAttribute("scrollOnly", scrollOnly);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSizes", List.of(5, 7, 10, 20, 50));
+        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
         if (!model.containsAttribute("eventDto")) {
             EventDTO dto = new EventDTO();
             dto.setStatus(EventStatus.PLANNED.name());
@@ -335,9 +342,14 @@ public class EventWebController {
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable Long id,
+                         @RequestParam(value = "redirect", required = false) String redirect,
+                         RedirectAttributes redirectAttributes) {
         eventService.deleteEventById(id);
         redirectAttributes.addFlashAttribute("success", "Evenimentul a fost șters.");
+        if (redirect != null && redirect.startsWith("/")) {
+            return "redirect:" + redirect;
+        }
         return "redirect:/events";
     }
 
@@ -631,9 +643,15 @@ public class EventWebController {
 
     private int normalizeSize(int size) {
         return switch (size) {
-            case 5, 7, 10, 20, 50 -> size;
-            default -> 20;
+            case 5, 10, 20, 25, 50, 100 -> size;
+            default -> 10;
         };
+    }
+
+    private int defaultRowsPerPage() {
+        return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
+                .map(setting -> setting.getIntValue())
+                .orElse(20));
     }
 
     private Map<String, String> validateEventForm(EventDTO eventDto, String implementedByIdRaw, boolean requireImplementedBy) {

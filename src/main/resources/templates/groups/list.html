@@ -33,6 +33,8 @@
         data-partial-form
         data-partial-endpoint="/groups/results"
         data-partial-target="[data-groups-results]">
+    <input type="hidden" name="page" value="1" />
+    <input type="hidden" name="size" th:value="${size}" />
     <label class="toolbar-item">
       <span data-i18n="search.label">Caută</span>
       <input type="text" name="q" th:value="${q}" placeholder="Nume sau descriere..." data-i18n-placeholder="search.groupPlaceholder" />
@@ -111,6 +113,36 @@
       </tbody>
     </table>
   </div>
+
+  <div class="pagination-bar">
+    <a class="link-button" th:if="${page > 1}"
+       th:href="@{/groups(q=${q},type=${type},size=${size != defaultSize ? size : null},page=${page - 1})}"
+       data-partial-link
+       data-partial-endpoint="/groups/results"
+       data-partial-target="[data-groups-results]"
+       data-i18n="pagination.previous">Anterior</a>
+    <span class="pagination-info"
+          th:text="${'Pagina ' + page + ' din ' + totalPages + ' (' + totalItems + ' înregistrări)'}"></span>
+    <a class="link-button" th:if="${page < totalPages}"
+       th:href="@{/groups(q=${q},type=${type},size=${size != defaultSize ? size : null},page=${page + 1})}"
+       data-partial-link
+       data-partial-endpoint="/groups/results"
+       data-partial-target="[data-groups-results]"
+       data-i18n="pagination.next">Următor</a>
+    <form method="get"
+          th:action="@{/groups}"
+          class="pagination-controls"
+          data-partial-pagination-form
+          data-partial-endpoint="/groups/results"
+          data-partial-target="[data-groups-results]">
+      <input type="hidden" name="q" th:value="${q}" />
+      <input type="hidden" name="type" th:value="${type}" />
+      <input type="hidden" name="page" value="1" />
+      <select name="size" onchange="this.form.submit()" aria-label="Număr rânduri">
+        <option th:each="pageSize : ${pageSizes}" th:value="${pageSize}" th:text="${pageSize}" th:selected="${size == pageSize}"></option>
+      </select>
+    </form>
+  </div>
   </section>
 
   <div class="group-form-modal" data-group-form-modal hidden>
@@ -132,23 +164,27 @@
         <section class="group-form-layout">
           <div class="group-form-fields">
             <label>
-              <span data-i18n="groups.name">Nume grup</span>
+              <span data-i18n="groups.name">Nume grup <span class="required-indicator">*</span></span>
               <input type="text" name="name" required data-group-name-field />
+              <span class="field-error" data-error-name style="display:none;"></span>
             </label>
             <label>
-              <span data-i18n="groups.type">Tip grup</span>
-              <select name="type" data-group-type-field>
+              <span data-i18n="groups.type">Tip grup <span class="required-indicator">*</span></span>
+              <select name="type" required data-group-type-field>
+                <option value="">Selectează tipul...</option>
                 <option th:each="item : ${groupTypes}" th:value="${item}" th:text="${@uiLabels.groupType(item)}"></option>
               </select>
+              <span class="field-error" data-error-type style="display:none;"></span>
             </label>
             <label>
-              <span data-i18n="groups.leader">Lider</span>
-              <select name="leaderId" data-group-leader-field>
+              <span data-i18n="groups.leader">Lider <span class="required-indicator">*</span></span>
+              <select name="leaderId" required data-group-leader-field>
                 <option value="" data-i18n="common.none">—</option>
                 <option th:each="person : ${allPersons}"
                         th:value="${person.id}"
                         th:text="${person.fullName != null and !#strings.isEmpty(#strings.trim(person.fullName)) ? #strings.trim(person.fullName) : 'Persoană fără nume'}"></option>
               </select>
+              <span class="field-error" data-error-leaderId style="display:none;"></span>
             </label>
             <label>
               <span data-i18n="groups.description">Descriere</span>
@@ -157,9 +193,16 @@
           </div>
           <div class="group-member-picker">
             <div class="group-member-picker-header">
-              <span class="field-label" data-i18n="groups.members">Membri</span>
+              <span class="field-label" data-i18n="groups.members">Membri <span class="required-indicator">*</span></span>
               <span class="group-member-count" data-member-count data-i18n-template="groups.selectedCount" data-i18n-param-count="0">0 selectați</span>
             </div>
+            <input type="text" 
+                   style="position: absolute; opacity: 0; pointer-events: none; height: 0; width: 0;"
+                   required
+                   data-member-validation
+                   tabindex="-1"
+                   aria-hidden="true" />
+            <span class="field-error" data-error-memberIds style="display:none;"></span>
             <div class="group-member-selected is-empty" data-member-selected>
               <span class="muted" data-i18n="groups.noMemberSelected">Niciun membru selectat.</span>
             </div>

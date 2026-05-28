@@ -126,7 +126,7 @@
 
   <div class="pagination-bar">
     <a class="link-button" th:if="${!scrollOnly and page > 1}"
-       th:href="@{/persons(q=${q},memberType=${memberType},size=${size},scrollOnly=${scrollOnly},page=${page - 1})}"
+       th:href="@{/persons(q=${q},memberType=${memberType},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=${page - 1})}"
        data-partial-link
        data-partial-endpoint="/persons/results"
        data-partial-target="[data-persons-results]"
@@ -134,7 +134,7 @@
     <span class="pagination-info"
           th:text="${scrollOnly ? totalItems + ' înregistrări' : 'Pagina ' + page + ' din ' + totalPages + ' (' + totalItems + ' înregistrări)'}"></span>
     <a class="link-button" th:if="${!scrollOnly and page < totalPages}"
-       th:href="@{/persons(q=${q},memberType=${memberType},size=${size},scrollOnly=${scrollOnly},page=${page + 1})}"
+       th:href="@{/persons(q=${q},memberType=${memberType},size=${size != defaultSize ? size : null},scrollOnly=${scrollOnly},page=${page + 1})}"
        data-partial-link
        data-partial-endpoint="/persons/results"
        data-partial-target="[data-persons-results]"

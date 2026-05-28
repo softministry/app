@@ -13,12 +13,14 @@ public class UiLabels {
     private static final Map<String, String> GROUP_TYPE_LABELS = Map.ofEntries(
             Map.entry("SMALL_GROUP", "Grup mic"),
             Map.entry("TEAM", "Echipă"),
+            Map.entry("CLASS", "Clasă"),
             Map.entry("MINISTRY", "Slujire"),
             Map.entry("CHOIR", "Cor"),
             Map.entry("YOUTH", "Tineri"),
             Map.entry("CHILDREN", "Copii"),
             Map.entry("FAMILY", "Familie"),
-            Map.entry("PRAYER", "Rugăciune")
+            Map.entry("PRAYER", "Rugăciune"),
+            Map.entry("OTHER", "Altele")
     );
     private static final Map<String, String> MEMBER_TYPE_LABELS = Map.ofEntries(
             Map.entry("MEMBER", "Membri"),

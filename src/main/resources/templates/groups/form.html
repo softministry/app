@@ -35,29 +35,33 @@
 
     <section class="form-grid">
       <label>
-        <span>Nume grup</span>
-        <input type="text" th:field="*{name}" required />
+        <span>Nume grup <span class="required-indicator">*</span></span>
+        <input type="text" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'error'" required />
+        <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
       </label>
       <label>
-        <span>Tip grup</span>
-        <select th:field="*{type}">
+        <span>Tip grup <span class="required-indicator">*</span></span>
+        <select th:field="*{type}" th:classappend="${#fields.hasErrors('type')} ? 'error'">
           <option th:each="item : ${groupTypes}" th:value="${item}" th:text="${@uiLabels.groupType(item)}"></option>
         </select>
+        <span class="field-error" th:if="${#fields.hasErrors('type')}" th:errors="*{type}"></span>
       </label>
       <label>
-        <span>Lider</span>
-        <select th:field="*{leaderId}">
+        <span>Lider <span class="required-indicator">*</span></span>
+        <select th:field="*{leaderId}" th:classappend="${#fields.hasErrors('leaderId')} ? 'error'" required>
           <option value="">—</option>
           <option th:each="person : ${allPersons}"
                   th:value="${person.id}"
                   th:text="${person.fullName != null and !#strings.isEmpty(#strings.trim(person.fullName)) ? #strings.trim(person.fullName) : 'Persoană fără nume'}"></option>
         </select>
+        <span class="field-error" th:if="${#fields.hasErrors('leaderId')}" th:errors="*{leaderId}"></span>
       </label>
       <div class="group-member-picker">
         <div class="group-member-picker-header">
-          <span class="field-label">Membri</span>
+          <span class="field-label">Membri <span class="required-indicator">*</span></span>
           <span class="group-member-count" data-member-count>0 selectați</span>
         </div>
+        <span class="field-error" th:if="${#fields.hasErrors('memberIds')}" th:errors="*{memberIds}"></span>
         <div class="group-member-selected is-empty" data-member-selected>
           <span class="muted">Niciun membru selectat.</span>
         </div>
@@ -107,13 +111,69 @@
 
     <label>
       <span>Descriere</span>
-      <textarea th:field="*{description}" rows="4" placeholder="Scop, ritm întâlniri, observații..."></textarea>
+      <textarea th:field="*{description}" th:classappend="${#fields.hasErrors('description')} ? 'error'" rows="4" placeholder="Scop, ritm întâlniri, observații..."></textarea>
+      <span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
     </label>
 
     <div class="form-actions">
-      <button type="submit" class="button primary">Salvează</button>
+      <button type="submit" class="button primary" id="submitButton">Salvează</button>
       <a th:href="@{/groups}" class="link-button">Anulează</a>
     </div>
+    
+    <script>
+      // Client-side validation to prevent submission without required fields
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.event-form');
+        const nameInput = document.querySelector('input[name="name"]');
+        const typeSelect = document.querySelector('select[name="type"]');
+        const leaderSelect = document.querySelector('select[name="leaderId"]');
+        const memberCheckboxes = document.querySelectorAll('input[name="memberIds"]');
+        const submitButton = document.getElementById('submitButton');
+        
+        function validateForm() {
+          const nameValid = nameInput && nameInput.value.trim().length >= 2;
+          const typeValid = typeSelect && typeSelect.value !== '';
+          const leaderValid = leaderSelect && leaderSelect.value !== '';
+          const membersValid = Array.from(memberCheckboxes).some(cb => cb.checked);
+          return nameValid && typeValid && leaderValid && membersValid;
+        }
+        
+        function updateSubmitButton() {
+          if (submitButton) {
+            submitButton.disabled = !validateForm();
+          }
+        }
+        
+        // Initial check
+        updateSubmitButton();
+        
+        // Listen for changes
+        if (nameInput) {
+          nameInput.addEventListener('input', updateSubmitButton);
+          nameInput.addEventListener('blur', updateSubmitButton);
+        }
+        if (typeSelect) {
+          typeSelect.addEventListener('change', updateSubmitButton);
+        }
+        if (leaderSelect) {
+          leaderSelect.addEventListener('change', updateSubmitButton);
+        }
+        memberCheckboxes.forEach(function(checkbox) {
+          checkbox.addEventListener('change', updateSubmitButton);
+        });
+        
+        // Prevent form submission if invalid
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+              e.preventDefault();
+              alert('Vă rugăm să completați toate câmpurile obligatorii marcate cu *:\n- Nume grup\n- Tip grup\n- Lider\n- Cel puțin un membru');
+              return false;
+            }
+          });
+        }
+      });
+    </script>
   </form>
 </div>
 </body>

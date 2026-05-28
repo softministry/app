@@ -1,8 +1,10 @@
 package ro.church_office.teamleaf.web;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,7 @@ import ro.church_office.info.groups.GroupType;
 import ro.church_office.info.person.DAO.Person;
 import ro.church_office.info.person.DAO.PersonRepository;
 import ro.church_office.info.person.DTO.PersonDTO;
+import ro.church_office.info.users.DAO.GlobalSettingRepository;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,26 +34,33 @@ import java.util.stream.Collectors;
 @RequestMapping("/groups")
 public class GroupWebController {
 
+    private static final String ROWS_KEY = "rows_per_page";
+
     private final ChurchGroupRepository groupRepository;
     private final PersonRepository personRepository;
     private final EventRepository eventRepository;
     private final ChurchContextService churchContextService;
+    private final GlobalSettingRepository globalSettingRepository;
 
     public GroupWebController(ChurchGroupRepository groupRepository,
                               PersonRepository personRepository,
                               EventRepository eventRepository,
-                              ChurchContextService churchContextService) {
+                              ChurchContextService churchContextService,
+                              GlobalSettingRepository globalSettingRepository) {
         this.groupRepository = groupRepository;
         this.personRepository = personRepository;
         this.eventRepository = eventRepository;
         this.churchContextService = churchContextService;
+        this.globalSettingRepository = globalSettingRepository;
     }
 
     @GetMapping
     public String list(@RequestParam(value = "q", required = false) String q,
                        @RequestParam(value = "type", required = false) GroupType type,
+                       @RequestParam(value = "page", defaultValue = "1") int page,
+                       @RequestParam(value = "size", required = false) Integer size,
                        Model model) {
-        populateListModel(q, type, model);
+        populateListModel(q, type, page, size, model);
         attachMeta(model);
         return "groups/list";
     }
@@ -58,13 +68,15 @@ public class GroupWebController {
     @PostMapping("/results")
     public String listResults(@RequestParam(value = "q", required = false) String q,
                               @RequestParam(value = "type", required = false) GroupType type,
+                              @RequestParam(value = "page", defaultValue = "1") int page,
+                              @RequestParam(value = "size", required = false) Integer size,
                               Model model) {
-        populateListModel(q, type, model);
+        populateListModel(q, type, page, size, model);
         attachMeta(model);
         return "groups/list :: resultsSection";
     }
 
-    private void populateListModel(String q, GroupType type, Model model) {
+    private void populateListModel(String q, GroupType type, int page, Integer size, Model model) {
         Long churchId = churchContextService.getOrCreateActiveChurchId();
         Sort sort = Sort.by(Sort.Order.asc("type"), Sort.Order.asc("name"));
         List<ChurchGroup> groups = q != null && !q.isBlank()
@@ -75,11 +87,39 @@ public class GroupWebController {
             groups = groups.stream().filter(group -> type.equals(group.getType())).toList();
         }
 
-        model.addAttribute("groups", groups);
+        int defaultSize = defaultRowsPerPage();
+        int normalizedSize = normalizeSize(size == null ? defaultSize : size);
+        int totalItems = groups.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / normalizedSize));
+        int currentPage = Math.min(Math.max(page, 1), totalPages);
+        int fromIndex = Math.min((currentPage - 1) * normalizedSize, totalItems);
+        int toIndex = Math.min(fromIndex + normalizedSize, totalItems);
+
+        List<ChurchGroup> visibleGroups = groups.subList(fromIndex, toIndex);
+        model.addAttribute("groups", visibleGroups);
         model.addAttribute("groupForm", defaultGroupForm());
-        model.addAttribute("groupEditDataById", groupEditDataById(groups));
+        model.addAttribute("groupEditDataById", groupEditDataById(visibleGroups));
         model.addAttribute("q", q == null ? "" : q);
         model.addAttribute("type", type);
+        model.addAttribute("page", currentPage);
+        model.addAttribute("size", normalizedSize);
+        model.addAttribute("defaultSize", defaultSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
+    }
+
+    private int normalizeSize(int size) {
+        return switch (size) {
+            case 5, 10, 20, 25, 50, 100 -> size;
+            default -> 10;
+        };
+    }
+
+    private int defaultRowsPerPage() {
+        return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
+                .map(setting -> setting.getIntValue())
+                .orElse(5));
     }
 
     @GetMapping("/new")
@@ -90,13 +130,32 @@ public class GroupWebController {
     }
 
     @PostMapping
-    public String create(@ModelAttribute("groupForm") GroupForm form,
+    public String create(@Valid @ModelAttribute("groupForm") GroupForm form,
+                         BindingResult bindingResult,
+                         Model model,
                          RedirectAttributes redirectAttributes) {
+        System.out.println("=== CREATE GROUP DEBUG ===");
+        System.out.println("Form name: " + form.getName());
+        System.out.println("Form type: " + form.getType());
+        System.out.println("Form leaderId: " + form.getLeaderId());
+        System.out.println("Form memberIds: " + form.getMemberIds());
+        System.out.println("Form description: " + form.getDescription());
+        System.out.println("Has binding errors: " + bindingResult.hasErrors());
+        if (bindingResult.hasErrors()) {
+            System.out.println("Binding errors: " + bindingResult.getAllErrors());
+            attachMeta(model);
+            return "groups/form";
+        }
         try {
             ChurchGroup saved = saveGroup(null, form);
+            System.out.println("Saved group type: " + saved.getType());
+            System.out.println("=== END DEBUG ===");
             redirectAttributes.addFlashAttribute("success", "Grupul a fost creat.");
             return "redirect:/groups";
         } catch (Exception ex) {
+            System.out.println("ERROR: " + ex.getMessage());
+            ex.printStackTrace();
+            System.out.println("=== END DEBUG ===");
             redirectAttributes.addFlashAttribute("error", ex.getMessage() == null ? "Nu s-a putut crea grupul." : ex.getMessage());
             return "redirect:/groups";
         }
@@ -141,8 +200,14 @@ public class GroupWebController {
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id,
-                         @ModelAttribute("groupForm") GroupForm form,
+                         @Valid @ModelAttribute("groupForm") GroupForm form,
+                         BindingResult bindingResult,
+                         Model model,
                          RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            attachMeta(model);
+            return "groups/form";
+        }
         try {
             saveGroup(id, form);
             redirectAttributes.addFlashAttribute("success", "Grupul a fost actualizat.");
@@ -267,10 +332,21 @@ public class GroupWebController {
 
     public static class GroupForm {
         private Long id;
+        
+        @jakarta.validation.constraints.NotBlank(message = "Numele grupului este obligatoriu")
+        @jakarta.validation.constraints.Size(min = 2, max = 100, message = "Numele trebuie să aibă între 2 și 100 caractere")
         private String name;
+        
+        @jakarta.validation.constraints.NotNull(message = "Tipul grupului este obligatoriu")
         private GroupType type = GroupType.SMALL_GROUP;
+        
+        @jakarta.validation.constraints.NotNull(message = "Liderul este obligatoriu")
         private Long leaderId;
+        
+        @jakarta.validation.constraints.Size(max = 1000, message = "Descrierea nu poate depăși 1000 caractere")
         private String description;
+        
+        @jakarta.validation.constraints.NotEmpty(message = "Cel puțin un membru este obligatoriu")
         private List<Long> memberIds = List.of();
 
         public static GroupForm from(ChurchGroup group) {
