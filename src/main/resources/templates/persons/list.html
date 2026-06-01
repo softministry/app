@@ -79,7 +79,7 @@
     <tr th:each="p, stat : ${persons}">
       <td th:text="${stat.count + '.'}">1.</td>
       <td>
-        <a th:href="@{'/persons/' + ${p.id}}" class="link" th:text="${p.fullName}">Nume</a>
+        <a th:href="@{'/persons/' + ${p.id}}" class="link person-name" th:text="${p.fullName}">Nume</a>
         <p class="muted" th:text="${p.address}"></p>
       </td>
       <td class="member-type-cell">
@@ -93,14 +93,18 @@
           th:with="personGroups=${personGroupsById[p.id]}">
         <div class="person-group-links" th:if="${personGroups != null and !personGroups.empty}">
           <a th:each="group, groupStat : ${personGroups}"
-             th:if="${groupStat.index < 3}"
              th:href="@{'/groups/' + ${group.id()}}"
-             class="person-group-chip"
+             th:classappend="${groupStat.index > 0} ? ' person-group-extra'"
+             class="person-group-chip group-name"
              th:title="${group.type() != null and !#strings.isEmpty(group.type()) ? group.name() + ' · ' + @uiLabels.groupType(group.type()) : group.name()}"
              th:text="${group.name()}">Grup</a>
-          <span th:if="${personGroups.size() > 3}"
-                class="person-group-more"
-                th:text="${'+' + (personGroups.size() - 3)}">+1</span>
+          <button th:if="${personGroups.size() > 1}"
+                  type="button"
+                  class="person-group-more"
+                  th:text="${'+' + (personGroups.size() - 1)}"
+                  data-groups-toggle
+                  aria-expanded="false"
+                  aria-label="Arată toate grupurile">+1</button>
         </div>
         <span th:if="${personGroups == null or personGroups.empty}" class="muted">—</span>
       </td>
@@ -158,6 +162,22 @@
     </form>
   </div>
   </section>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </div>
+<script>
+(function () {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-groups-toggle]');
+    if (!btn) return;
+    e.preventDefault();
+    var links = btn.closest('.person-group-links');
+    if (!links) return;
+    var expanded = links.classList.toggle('is-groups-expanded');
+    var extras = links.querySelectorAll('.person-group-extra');
+    btn.textContent = expanded ? '−' : '+' + extras.length;
+    btn.setAttribute('aria-expanded', String(expanded));
+  });
+})();
+</script>
 </body>
 </html>

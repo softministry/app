@@ -52,7 +52,7 @@
           <td th:text="${stat.count + '.'}">1.</td>
           <td>
             <input type="hidden" name="personIds" th:value="${row.person.id}" />
-            <strong th:text="${row.person.fullName}">Nume persoană</strong>
+            <strong class="person-name" th:text="${row.person.fullName}">Nume persoană</strong>
           </td>
           <td class="member-type-cell">
             <span th:if="${row.person.memberType != null}"

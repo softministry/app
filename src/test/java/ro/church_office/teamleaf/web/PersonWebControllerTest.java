@@ -112,7 +112,7 @@ class PersonWebControllerTest {
         PersonDTO dto = new PersonDTO();
         dto.setFirstName("Ioan");
         dto.setLastName("Ionescu");
-        dto.setMemberType(MemberType.FREND);
+        dto.setMemberType(MemberType.FRIEND);
         dto.setPhone("0733");
 
         RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
@@ -122,7 +122,7 @@ class PersonWebControllerTest {
         assertNotNull(redirect.getFlashAttributes().get("success"));
         assertEquals("Ioan", existing.getFirstName());
         assertEquals("Ionescu", existing.getLastName());
-        assertEquals(MemberType.FREND, existing.getMemberType());
+        assertEquals(MemberType.FRIEND, existing.getMemberType());
         verify(personRepository).deleteChildLinks(7L);
         verify(personRepository, org.mockito.Mockito.atLeastOnce()).save(existing);
     }

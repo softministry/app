@@ -7,6 +7,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.web.servlet.MockMvc;
+import ro.church_office.info.attendance.AttendanceRecordRepository;
+import ro.church_office.info.attendance.AttendanceSession;
 import ro.church_office.info.church.ChurchContextService;
 import ro.church_office.info.church.DAO.ChurchInfo;
 import ro.church_office.info.church.Repository.ChurchInfoRepository;
@@ -41,7 +43,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -70,6 +74,8 @@ class CrudDbOperationsIT extends AbstractContainerIT {
     private TransactionRepository transactionRepository;
     @Autowired
     private TransactionChurchScopeRepository transactionScopeRepository;
+    @Autowired
+    private AttendanceRecordRepository attendanceRecordRepository;
 
     private Long activeChurchId;
 
@@ -111,14 +117,14 @@ class CrudDbOperationsIT extends AbstractContainerIT {
                         .param("address", "Strada Test 2")
                         .param("position", "admin")
                         .param("birthDate", "1990-02-03")
-                        .param("memberType", "FREND"))
+                        .param("memberType", "FRIEND"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("/persons/*"));
 
         Person updated = personRepository.findByIdAndChurchId(created.getId(), activeChurchId).orElseThrow();
         assertEquals("Ionescu", updated.getLastName());
         assertEquals("0799999999", updated.getPhone());
-        assertEquals(MemberType.FREND, updated.getMemberType());
+        assertEquals(MemberType.FRIEND, updated.getMemberType());
 
         mockMvc.perform(post("/persons/{id}/delete", created.getId())
                         .with(user("admin").roles("ADMIN"))
@@ -241,6 +247,80 @@ class CrudDbOperationsIT extends AbstractContainerIT {
 
         assertTrue(transactionRepository.findById(created.getId()).isEmpty());
         assertTrue(transactionScopeRepository.findByTransactionId(created.getId()).isEmpty());
+    }
+
+    @Test
+    void attendanceRegisteredSessionCanBeDeletedFromTableContextMenuTarget() throws Exception {
+        Person first = IntegrationFixtures.createPerson(personRepository, activeChurchId, "Ioan", "Prezent");
+        Person second = IntegrationFixtures.createPerson(personRepository, activeChurchId, "Paul", "Absent");
+
+        mockMvc.perform(post("/attendance")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .param("date", "2026-04-20")
+                        .param("session", "MORNING")
+                        .param("personIds", first.getId().toString(), second.getId().toString())
+                        .param("presentPersonIds", first.getId().toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/attendance?date=2026-04-20&session=MORNING"));
+
+        assertEquals(2, attendanceRecordRepository
+                .findByChurchIdAndAttendanceDateAndSession(activeChurchId, LocalDate.of(2026, 4, 20), AttendanceSession.MORNING)
+                .size());
+
+        mockMvc.perform(get("/attendance")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-attendance-delete-url=\"/attendance/delete\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-attendance-date=\"2026-04-20\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-attendance-session=\"MORNING\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-attendance-context-delete")));
+
+        mockMvc.perform(post("/attendance/delete")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .param("date", "2026-04-20")
+                        .param("session", "MORNING"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/attendance?date=2026-04-20&session=MORNING"));
+
+        assertTrue(attendanceRecordRepository
+                .findByChurchIdAndAttendanceDateAndSession(activeChurchId, LocalDate.of(2026, 4, 20), AttendanceSession.MORNING)
+                .isEmpty());
+    }
+
+    @Test
+    void renderedEventCreateFormSubmitsAndPersistsWithoutImplementer() throws Exception {
+        Person activePerson = IntegrationFixtures.createPerson(personRepository, activeChurchId, "Ana", "Activa");
+        ChurchInfo otherChurch = IntegrationFixtures.ensureChurch(churchInfoRepository, "Other Event Church");
+        IntegrationFixtures.createPerson(personRepository, otherChurch.getId(), "Mihai", "AltaBiserica");
+
+        mockMvc.perform(get("/events/new")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("action=\"/events\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(activePerson.getFirstName())))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("AltaBiserica"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("required data-autocomplete-input"))));
+
+        mockMvc.perform(post("/events")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf())
+                        .param("eventName", "Eveniment fara responsabil IT")
+                        .param("status", "PLANNED")
+                        .param("eventType", "OTHER")
+                        .param("openDate", "2026-06-15")
+                        .param("about", "Creat din formularul real")
+                        .param("priority", "MEDIUM")
+                        .param("recurrenceType", "NONE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/events/*/edit"));
+
+        Event created = latestEvent("Eveniment fara responsabil IT");
+        assertEquals(activeChurchId, created.getChurchId());
+        assertEquals(LocalDate.of(2026, 6, 15), created.getOpenDate());
+        assertEquals(EventType.OTHER, created.getEventType());
+        assertEquals(Priority.MEDIUM, created.getPriority());
     }
 
     @Test

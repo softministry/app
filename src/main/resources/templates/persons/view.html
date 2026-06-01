@@ -9,7 +9,7 @@
 <div class="page-shell">
   <header class="page-header">
     <div>
-      <h1 th:text="${person.fullName}">Persoană</h1>
+      <h1 class="person-name" th:text="${person.fullName}">Persoană</h1>
     </div>
     <div class="header-actions">
       <nav th:replace="~{fragments/layout :: mainNav}"></nav>
@@ -257,5 +257,6 @@
     </section>
   </div>
 </div>
+<th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>

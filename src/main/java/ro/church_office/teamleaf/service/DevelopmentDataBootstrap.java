@@ -136,7 +136,7 @@ public class DevelopmentDataBootstrap implements ApplicationRunner {
                     : List.of("Worship Team", "Church Choir", "Media Team", "Pastoral Care", "Youth Ministry").get(random.nextInt(5)))
                     : null);
             p.setBirthDate(LocalDate.now().minusYears(14 + random.nextInt(55)).minusDays(random.nextInt(365)));
-            p.setMemberType(random.nextDouble() < 0.14 ? MemberType.FREND : MemberType.MEMBER);
+            p.setMemberType(random.nextDouble() < 0.14 ? MemberType.FRIEND : MemberType.MEMBER);
             result.add(personRepository.save(p));
         }
         return result;

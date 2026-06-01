@@ -94,7 +94,7 @@
                draggable="true"
                data-followup-card
                th:attr="data-followup-id=${item.id},data-stage='new'">
-            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link"
+            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link person-name"
                th:text="${((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim()}">Persoană</a>
             <span class="muted" th:if="${item.nextContactDate != null}"
                   data-i18n-template="followups.nextContactDate"
@@ -130,7 +130,7 @@
                draggable="true"
                data-followup-card
                th:attr="data-followup-id=${item.id},data-stage='contacted'">
-            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link"
+            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link person-name"
                th:text="${((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim()}">Persoană</a>
             <span class="muted" th:if="${item.lastContactDate != null}"
                   data-i18n-template="followups.lastContactDate"
@@ -169,7 +169,7 @@
                draggable="true"
                data-followup-card
                th:attr="data-followup-id=${item.id},data-stage='in_progress'">
-            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link"
+            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link person-name"
                th:text="${((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim()}">Persoană</a>
             <span class="muted" th:if="${item.nextContactDate != null}"
                   data-i18n-template="followups.nextContactDate"
@@ -201,7 +201,7 @@
                draggable="true"
                data-followup-card
                th:attr="data-followup-id=${item.id},data-stage='resolved'">
-            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link"
+            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link person-name"
                th:text="${((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim()}">Persoană</a>
             <span class="muted" th:if="${item.lastContactDate != null}"
                   data-i18n-template="followups.lastContactDate"
@@ -244,13 +244,13 @@
         <tbody>
         <tr th:each="item : ${followUps}">
           <td>
-            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link"
+            <a th:if="${item.person != null}" th:href="@{'/persons/' + ${item.person.id}}" class="link person-name"
                th:text="${((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim()}">Persoană</a>
             <span th:if="${item.person == null}">—</span>
           </td>
           <td>
-            <a th:if="${item.group != null}" th:href="@{'/groups/' + ${item.group.id}}" class="link" th:text="${item.group.name}">Grup</a>
-            <span th:if="${item.group == null}" class="muted">—</span>
+            <a th:if="${item.group != null}" th:href="@{'/groups/' + ${item.group.id}}" class="link group-name" th:text="${item.group.name}">Grup</a>
+            <span th:if="${item.group == null}">—</span>
           </td>
           <td>
             <span class="pill"
@@ -291,5 +291,6 @@
     </div>
   </section>
 </div>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>

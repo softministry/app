@@ -105,8 +105,83 @@
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
         closeHeaderMenus();
+        closeChurchContextMenu();
       }
     });
+
+    // Right-click context menu on church switcher options
+    var churchContextMenu = document.createElement("div");
+    churchContextMenu.className = "church-context-menu";
+    churchContextMenu.style.display = "none";
+    churchContextMenu.setAttribute("aria-hidden", "true");
+    churchContextMenu.innerHTML =
+      '<button type="button" class="church-context-menu-item" id="churchContextEditBtn">' +
+      '<span class="material-icons" aria-hidden="true">edit</span>Editează</button>';
+    document.body.appendChild(churchContextMenu);
+
+    var contextChurchId = null;
+
+    function closeChurchContextMenu() {
+      churchContextMenu.style.display = "none";
+      churchContextMenu.setAttribute("aria-hidden", "true");
+      contextChurchId = null;
+    }
+
+    document.addEventListener("contextmenu", function (event) {
+      var option = event.target.closest(".church-select-option");
+      if (!option || option.classList.contains("church-select-option-add")) {
+        closeChurchContextMenu();
+        return;
+      }
+      event.preventDefault();
+      contextChurchId = option.value;
+
+      churchContextMenu.style.display = "block";
+      churchContextMenu.setAttribute("aria-hidden", "false");
+
+      var x = event.clientX;
+      var y = event.clientY;
+      churchContextMenu.style.left = x + "px";
+      churchContextMenu.style.top  = y + "px";
+
+      var rect = churchContextMenu.getBoundingClientRect();
+      if (rect.right > window.innerWidth)  churchContextMenu.style.left = (x - rect.width) + "px";
+      if (rect.bottom > window.innerHeight) churchContextMenu.style.top = (y - rect.height) + "px";
+    });
+
+    document.getElementById("churchContextEditBtn").addEventListener("click", function () {
+      if (!contextChurchId) { closeChurchContextMenu(); return; }
+
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/church/select";
+
+      var csrfParam = (document.querySelector('meta[name="_csrf_parameter"]') || {}).getAttribute
+        ? document.querySelector('meta[name="_csrf_parameter"]').getAttribute("content") : "_csrf";
+      var csrfToken = (document.querySelector('meta[name="_csrf"]') || {}).getAttribute
+        ? document.querySelector('meta[name="_csrf"]').getAttribute("content") : null;
+
+      [["churchId", contextChurchId], ["redirect", "/settings/church"]].forEach(function (pair) {
+        var inp = document.createElement("input");
+        inp.type = "hidden"; inp.name = pair[0]; inp.value = pair[1];
+        form.appendChild(inp);
+      });
+      if (csrfToken) {
+        var csrf = document.createElement("input");
+        csrf.type = "hidden"; csrf.name = csrfParam; csrf.value = csrfToken;
+        form.appendChild(csrf);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!churchContextMenu.contains(event.target)) {
+        closeChurchContextMenu();
+      }
+    });
+
+    document.addEventListener("scroll", closeChurchContextMenu, true);
 
     // The click handler is inline in templates so the toggle keeps working even if
     // browsers cache an older copy of this shared script.

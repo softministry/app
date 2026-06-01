@@ -154,7 +154,7 @@ public class PersonWebController {
         model.addAttribute("scrollOnly", scrollOnly);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
+        model.addAttribute("pageSizes", List.of(5, 7, 10, 20, 25, 50, 100));
     }
 
     @GetMapping("/new")
@@ -354,15 +354,15 @@ public class PersonWebController {
 
     private int normalizeSize(int size) {
         return switch (size) {
-            case 5, 10, 20, 25, 50, 100 -> size;
-            default -> 10;
+            case 5, 7, 10, 20, 25, 50, 100 -> size;
+            default -> 7;
         };
     }
 
     private int defaultRowsPerPage() {
         return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
                 .map(setting -> setting.getIntValue())
-                .orElse(5));
+                .orElse(7));
     }
 
     private Person saveOrUpdatePerson(Long id, PersonDTO dto) {
@@ -517,13 +517,11 @@ public class PersonWebController {
         List<PastoralTimelineItem> items = new ArrayList<>();
         Long personId = person.getId();
 
-        for (AttendanceRecord record : attendanceRecordRepository.findTop20ByChurchIdAndPerson_IdOrderByAttendanceDateDescServiceSessionAscRecordedAtDesc(churchId, personId)) {
+        for (AttendanceRecord record : attendanceRecordRepository.findTop20ByChurchIdAndPersonIdOrderByAttendanceDateDescSessionAsc(churchId, personId)) {
             String status = record.getStatus() == AttendanceStatus.PRESENT ? "Prezent" : "Absent";
-            String detail = record.getServiceSession() == null ? status : status + " · " + record.getServiceSession();
-            if (record.getGroup() != null && record.getGroup().getName() != null) {
-                detail += " · " + record.getGroup().getName();
-            }
-            items.add(new PastoralTimelineItem(record.getAttendanceDate(), "Prezență", detail, "/attendance?date=" + record.getAttendanceDate() + "&session=" + record.getServiceSession()));
+            String detail = record.getSession() == null ? status : status + " · " + record.getSession().name();
+            items.add(new PastoralTimelineItem(record.getAttendanceDate(), "Prezență", detail,
+                    "/attendance?date=" + record.getAttendanceDate() + "&session=" + (record.getSession() == null ? "" : record.getSession().name())));
         }
 
         followUpRepository.findAllByChurchIdAndPerson_Id(churchId, personId, Sort.by(Sort.Order.desc("updatedAt"))).forEach(item -> {

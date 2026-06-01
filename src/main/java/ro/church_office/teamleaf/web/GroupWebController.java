@@ -106,20 +106,20 @@ public class GroupWebController {
         model.addAttribute("defaultSize", defaultSize);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
+        model.addAttribute("pageSizes", List.of(5, 7, 10, 20, 25, 50, 100));
     }
 
     private int normalizeSize(int size) {
         return switch (size) {
-            case 5, 10, 20, 25, 50, 100 -> size;
-            default -> 10;
+            case 5, 7, 10, 20, 25, 50, 100 -> size;
+            default -> 7;
         };
     }
 
     private int defaultRowsPerPage() {
         return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
                 .map(setting -> setting.getIntValue())
-                .orElse(5));
+                .orElse(7));
     }
 
     @GetMapping("/new")

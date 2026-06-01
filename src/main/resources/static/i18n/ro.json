@@ -177,7 +177,7 @@
     "ALL": "Toate",
     "MEMBER": "Membru",
     "CHILD": "Copil",
-    "FREND": "Prieten",
+    "FRIEND": "Prieten",
     "ADHERENT": "Aparținător",
     "VISITOR": "Vizitator"
   },
@@ -431,6 +431,9 @@
     "priorityLabel.scazuta": "Scăzută",
     "priorityCustomization": "Personalizare prioritate",
     "resetColors": "Resetează culorile",
+    "modifyFont": "Modifică font",
+    "fontColor": "Culoare font",
+    "fontSize": "Mărime font (rem)",
     "applyTheme": "Aplică tema",
     "themePreviewOnly": "Tema selectată este doar preview până apeși Aplică tema.",
     "statusCustomization": "Personalizare status",

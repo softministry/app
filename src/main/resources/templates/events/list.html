@@ -165,7 +165,7 @@
               th:text="${@uiLabels.priority(event.priority)}"></span>
       </td>
       <td>
-        <a th:if="${event.groupId != null}" th:href="@{'/groups/' + ${event.groupId}}" class="link truncate-single"
+        <a th:if="${event.groupId != null}" th:href="@{'/groups/' + ${event.groupId}}" class="link truncate-single group-name"
            th:title="${event.groupName}"
            th:text="${event.groupName}">Grup</a>
         <span th:if="${event.groupId == null}" class="muted">—</span>
@@ -246,6 +246,7 @@
     </form>
   </div>
   </section>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </div>
 </body>
 </html>

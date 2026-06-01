@@ -10,7 +10,7 @@
   <header class="page-header">
     <div>
       <p class="eyebrow" th:text="${@uiLabels.groupType(group.type)}">Echipă</p>
-      <h1 th:text="${group.name}">Grup</h1>
+      <h1 class="group-name" th:text="${group.name}">Grup</h1>
     </div>
     <div class="header-actions">
       <nav th:replace="~{fragments/layout :: mainNav}"></nav>
@@ -40,8 +40,8 @@
         <div>
           <dt>Lider</dt>
           <dd>
-            <a th:if="${group.leader != null}" th:href="@{'/persons/' + ${group.leader.id}}" class="link"
-               th:text="${#strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) != '' ? #strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) : 'Persoană fără nume'}">Lider</a>
+            <a th:href="@{'/persons/' + ${group.leader.id}}" class="link person-name"
+                            th:text="${#strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) != '' ? #strings.trim((group.leader.firstName != null ? group.leader.firstName : '') + ' ' + (group.leader.lastName != null ? group.leader.lastName : '')) : 'Persoană fără nume'}">Lider</a>
             <span th:if="${group.leader == null}">—</span>
           </dd>
         </div>
@@ -57,8 +57,8 @@
       <h2>Membri</h2>
       <ul class="list">
         <li th:each="member : ${members}">
-          <a th:href="@{'/persons/' + ${member.id}}" class="link"
-             th:text="${#strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) != '' ? #strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) : 'Persoană fără nume'}">Membru</a>
+          <a th:href="@{'/persons/' + ${member.id}}" class="link person-name"
+                         th:text="${#strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) != '' ? #strings.trim((member.firstName != null ? member.firstName : '') + ' ' + (member.lastName != null ? member.lastName : '')) : 'Persoană fără nume'}">Membru</a>
           <span class="muted" th:if="${group.leader != null and member.id == group.leader.id}"> · lider</span>
         </li>
         <li th:if="${members.empty}" class="muted">Nu există membri în acest grup.</li>
@@ -69,7 +69,7 @@
       <h2>Evenimente asociate</h2>
       <ul class="list">
         <li th:each="event : ${events}">
-          <a th:href="@{'/events/' + ${event.id} + '/edit'}" class="link" th:text="${event.eventName}">Eveniment</a>
+          <a th:href="@{'/events/' + ${event.id} + '/edit'}" class="link event-name" th:text="${event.eventName}">Eveniment</a>
           <span class="muted" th:text="${event.openDate != null ? ' · ' + event.openDate : ''}"></span>
         </li>
         <li th:if="${events.empty}" class="muted">Nu există evenimente asociate acestui grup.</li>
@@ -77,5 +77,6 @@
     </section>
   </div>
 </div>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>

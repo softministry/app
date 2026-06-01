@@ -3,8 +3,6 @@ package ro.church_office.teamleaf.security;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsPasswordService;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ro.church_office.info.users.DAO.User;
@@ -14,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Service
-public class UserAuthenticationService implements UserDetailsService, UserDetailsPasswordService {
+public class UserAuthenticationService {
 
     private final UserRepository userRepository;
 
@@ -22,14 +20,12 @@ public class UserAuthenticationService implements UserDetailsService, UserDetail
         this.userRepository = userRepository;
     }
 
-    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(normalizeUsername(username))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         return toPrincipal(user);
     }
 
-    @Override
     public UserDetails updatePassword(UserDetails user, String newPassword) {
         User current = userRepository.findByUsername(normalizeUsername(user.getUsername()))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));

@@ -248,6 +248,7 @@
 
   const renderNameList = () => {
     const target = form.querySelector('[data-appearance-list="name"]');
+    if (!target) return;
     target.innerHTML = '';
 
     const item = document.createElement('div');

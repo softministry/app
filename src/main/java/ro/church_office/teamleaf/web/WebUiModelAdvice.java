@@ -26,9 +26,16 @@ import java.util.Map;
 import java.util.Set;
 
 @ControllerAdvice
+@org.springframework.transaction.annotation.Transactional(readOnly = true)
 public class WebUiModelAdvice {
 
     private static final String UI_THEME_KEY = "ui_theme";
+    private static final String EVENT_NAME_COLOR_KEY = "event_name_color";
+    private static final String PERSON_NAME_COLOR_KEY = "person_name_color";
+    private static final String GROUP_NAME_COLOR_KEY = "group_name_color";
+    private static final String EVENT_NAME_FONT_SIZE_KEY = "event_name_font_size";
+    private static final String PERSON_NAME_FONT_SIZE_KEY = "person_name_font_size";
+    private static final String GROUP_NAME_FONT_SIZE_KEY = "group_name_font_size";
     private static final String PASTORAL_ENABLE_BIRTHDAY_KEY = "pastoral_enable_birthday";
     private static final String PASTORAL_BIRTHDAY_WINDOW_DAYS_KEY = "pastoral_birthday_window_days";
     public static final String BIRTHDAY_NOTIFICATION_SESSION_KEY = "header.birthday.notification.actions";
@@ -98,6 +105,45 @@ public class WebUiModelAdvice {
                 .map(GlobalSetting::getStringValue)
                 .filter(SUPPORTED_UI_THEMES::contains)
                 .orElse("midnight");
+    }
+
+    @ModelAttribute("cssEventNameColor")
+    public String cssEventNameColor(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        return hexColorSetting(EVENT_NAME_COLOR_KEY);
+    }
+
+    @ModelAttribute("cssPersonNameColor")
+    public String cssPersonNameColor(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        return hexColorSetting(PERSON_NAME_COLOR_KEY);
+    }
+
+    @ModelAttribute("cssGroupNameColor")
+    public String cssGroupNameColor(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        return hexColorSetting(GROUP_NAME_COLOR_KEY);
+    }
+
+    @ModelAttribute("cssEventNameFontSize")
+    public String cssEventNameFontSize(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        double val = doubleSetting(EVENT_NAME_FONT_SIZE_KEY, 0.93, 0.5, 3.0);
+        return String.format(java.util.Locale.US, "%.2f", val);
+    }
+
+    @ModelAttribute("cssPersonNameFontSize")
+    public String cssPersonNameFontSize(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        double val = doubleSetting(PERSON_NAME_FONT_SIZE_KEY, 0.93, 0.5, 3.0);
+        return String.format(java.util.Locale.US, "%.2f", val);
+    }
+
+    @ModelAttribute("cssGroupNameFontSize")
+    public String cssGroupNameFontSize(HttpServletRequest request) {
+        if (isAuthPage(request)) return null;
+        double val = doubleSetting(GROUP_NAME_FONT_SIZE_KEY, 0.93, 0.5, 3.0);
+        return String.format(java.util.Locale.US, "%.2f", val);
     }
 
     @ModelAttribute("headerCurrentPath")
@@ -265,6 +311,14 @@ public class WebUiModelAdvice {
         return value.trim();
     }
 
+    private String hexColorSetting(String key) {
+        return globalSettingRepository.findByKey(key)
+                .map(GlobalSetting::getStringValue)
+                .filter(v -> v != null && v.trim().matches("^#[0-9a-fA-F]{6}$"))
+                .map(String::trim)
+                .orElse(null);
+    }
+
     private boolean booleanSetting(String key, boolean defaultValue) {
         return globalSettingRepository.findByKey(key)
                 .map(GlobalSetting::getStringValue)
@@ -277,6 +331,21 @@ public class WebUiModelAdvice {
     private int intSetting(String key, int defaultValue, int min, int max) {
         int resolved = globalSettingRepository.findByKey(key)
                 .map(GlobalSetting::getIntValue)
+                .orElse(defaultValue);
+        if (resolved < min) return min;
+        return Math.min(resolved, max);
+    }
+
+    private double doubleSetting(String key, double defaultValue, double min, double max) {
+        double resolved = globalSettingRepository.findByKey(key)
+                .map(GlobalSetting::getStringValue)
+                .map(value -> {
+                    try {
+                        return Double.parseDouble(value.trim());
+                    } catch (Exception ex) {
+                        return defaultValue;
+                    }
+                })
                 .orElse(defaultValue);
         if (resolved < min) return min;
         return Math.min(resolved, max);

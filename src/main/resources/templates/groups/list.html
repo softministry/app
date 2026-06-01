@@ -78,7 +78,7 @@
       <tr th:each="group, stat : ${groups}">
         <td th:text="${stat.count + '.'}">1.</td>
         <td>
-          <a th:href="@{'/groups/' + ${group.id}}" class="link" th:text="${group.name}">Grup</a>
+          <a th:href="@{'/groups/' + ${group.id}}" class="link group-name" th:text="${group.name}">Grup</a>
           <p class="muted" th:text="${group.description != null and !#strings.isEmpty(group.description) ? group.description : '—'}">—</p>
         </td>
         <td th:text="${@uiLabels.groupType(group.type)}">Echipă</td>
@@ -239,5 +239,6 @@
     </section>
   </div>
 </div>
+<th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>

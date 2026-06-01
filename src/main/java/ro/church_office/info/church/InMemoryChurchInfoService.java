@@ -58,6 +58,14 @@ public class InMemoryChurchInfoService implements ChurchInfoService {
                 });
         String name = dto.getName() == null || dto.getName().isBlank() ? "Default Church" : dto.getName().trim();
         entity.setName(name);
+        entity.setAvatarUrl(dto.avatarUrl);
+        entity.setAddress(dto.address);
+        entity.setPastorName(dto.pastorName);
+        entity.setPastorPhone(dto.pastorPhone);
+        entity.setSecretaryName(dto.secretaryName);
+        entity.setSecretaryPhone(dto.secretaryPhone);
+        entity.setTreasurerName(dto.treasurerName);
+        entity.setTreasurerPhone(dto.treasurerPhone);
         ChurchInfo saved = churchInfoRepository.save(entity);
         if (dto.getId() != null && dto.getId().equals(getDefaultChurchId())) {
             setDefaultChurchId(saved.getId());
@@ -117,6 +125,14 @@ public class InMemoryChurchInfoService implements ChurchInfoService {
         ChurchInfoDTO dto = new ChurchInfoDTO();
         dto.id = entity.getId();
         dto.name = entity.getName();
+        dto.avatarUrl = entity.getAvatarUrl();
+        dto.address = entity.getAddress();
+        dto.pastorName = entity.getPastorName();
+        dto.pastorPhone = entity.getPastorPhone();
+        dto.secretaryName = entity.getSecretaryName();
+        dto.secretaryPhone = entity.getSecretaryPhone();
+        dto.treasurerName = entity.getTreasurerName();
+        dto.treasurerPhone = entity.getTreasurerPhone();
         return dto;
     }
 }

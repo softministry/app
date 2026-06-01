@@ -6,6 +6,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface AttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
-    default List<AttendanceRecord> findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescServiceSessionAscRecordedAtDesc(Long churchId, LocalDate start, LocalDate end) { return List.of(); }
-    default List<AttendanceRecord> findTop20ByChurchIdAndPerson_IdOrderByAttendanceDateDescServiceSessionAscRecordedAtDesc(Long churchId, Long personId){ return List.of(); }
+
+    List<AttendanceRecord> findByChurchIdAndAttendanceDateAndSession(
+            Long churchId, LocalDate attendanceDate, AttendanceSession session);
+
+    List<AttendanceRecord> findByChurchIdOrderByAttendanceDateDescSessionAsc(Long churchId);
+
+    List<AttendanceRecord> findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescSessionAsc(
+            Long churchId, LocalDate start, LocalDate end);
+
+    List<AttendanceRecord> findTop20ByChurchIdAndPersonIdOrderByAttendanceDateDescSessionAsc(
+            Long churchId, Long personId);
+
+    List<AttendanceRecord> findByChurchIdAndPersonIdOrderByAttendanceDateDesc(Long churchId, Long personId);
 }

@@ -25,7 +25,7 @@ public class UiLabels {
     private static final Map<String, String> MEMBER_TYPE_LABELS = Map.ofEntries(
             Map.entry("MEMBER", "Membri"),
             Map.entry("CHILD", "Copii"),
-            Map.entry("FREND", "Prieteni")
+            Map.entry("FRIEND", "Prieteni")
     );
     private static final Map<String, String> EVENT_STATUS_LABELS = Map.ofEntries(
             Map.entry("PLANNED", "Planificate"),

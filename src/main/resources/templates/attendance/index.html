@@ -99,7 +99,11 @@
               class="attendance-session-row"
               role="button"
               tabindex="0"
-              th:attr="data-attendance-details-url=@{/attendance/details(date=${item.attendanceDate},session=${item.serviceSession},groupId=${selectedGroupId})}"
+              th:attr="data-attendance-details-url=@{/attendance/details(date=${item.attendanceDate},session=${item.serviceSession},groupId=${selectedGroupId})},
+                       data-attendance-delete-url=@{/attendance/delete},
+                       data-attendance-date=${item.attendanceDate},
+                       data-attendance-session=${item.serviceSession},
+                       data-attendance-group-id=${selectedGroupId}"
               th:classappend="${item.attendanceDate.equals(attendanceDate) and item.serviceSession == selectedSession} ? 'is-selected'">
             <td th:text="${#temporals.format(item.attendanceDate, 'dd-MM-yyyy')}">20-04-2026</td>
             <td th:text="${@uiLabels.attendanceSession(item.serviceSession)}">Implicit</td>
@@ -133,6 +137,12 @@
       </div>
     </section>
   </div>
+  <div id="attendance-session-context-menu" class="calendar-context-menu" hidden>
+    <button type="button" class="calendar-context-menu-edit" data-attendance-context-edit>Editează</button>
+    <div class="calendar-context-menu-separator" aria-hidden="true"></div>
+    <button type="button" class="calendar-context-menu-delete" data-attendance-context-delete>Șterge</button>
+  </div>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </div>
 </body>
 </html>

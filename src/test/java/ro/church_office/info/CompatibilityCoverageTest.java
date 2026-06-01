@@ -83,8 +83,8 @@ class CompatibilityCoverageTest {
         assertEquals(GroupType.MINISTRY, g.getType());
 
         AttendanceRecord ar = new AttendanceRecord();
-        ar.setPerson(p); ar.setStatus(AttendanceStatus.PRESENT); ar.setAttendanceDate(LocalDate.now());
-        ar.setServiceSession(AttendanceSession.MORNING); ar.setGroup(g);
+        ar.setPersonId(p.getId()); ar.setStatus(AttendanceStatus.PRESENT); ar.setAttendanceDate(LocalDate.now());
+        ar.setSession(AttendanceSession.MORNING);
         assertEquals(AttendanceStatus.PRESENT, ar.getStatus());
 
         AttendanceService as = new AttendanceService() {};

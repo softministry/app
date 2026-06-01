@@ -1,8 +1,6 @@
 package ro.church_office.info.person.DAO;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,7 +24,6 @@ public class Person {
     private Set<Person> children = new LinkedHashSet<>();
     @Transient
     private Set<Person> parents = new LinkedHashSet<>();
-    @Enumerated(EnumType.STRING)
     public MemberType getMemberType(){return memberType;} public void setMemberType(MemberType t){memberType=t;}
     public Long getId(){return id;} public void setId(Long id){this.id=id;} public Long getChurchId(){return churchId;} public void setChurchId(Long c){churchId=c;}
     public String getFirstName(){return firstName;} public void setFirstName(String s){firstName=s;} public String getLastName(){return lastName;} public void setLastName(String s){lastName=s;}

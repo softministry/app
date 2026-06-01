@@ -106,6 +106,24 @@ public class AttendanceWebController {
         return groupId == null ? redirect : redirect + "&groupId=" + groupId;
     }
 
+    @PostMapping("/attendance/delete")
+    public String deleteAttendanceSession(@RequestParam("date") String date,
+                                          @RequestParam("session") String session,
+                                          @RequestParam(value = "groupId", required = false) Long groupId,
+                                          RedirectAttributes redirectAttributes) {
+        LocalDate attendanceDate = parseDate(date);
+        AttendanceSession attendanceSession = attendanceService.parseSession(session);
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
+        int deleted = attendanceService.deleteSession(churchId, attendanceDate, attendanceSession);
+        if (deleted > 0) {
+            redirectAttributes.addFlashAttribute("success", "Programul înregistrat a fost șters.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Programul înregistrat nu a fost găsit.");
+        }
+        String redirect = "redirect:/attendance?date=" + attendanceDate + "&session=" + attendanceSession;
+        return groupId == null ? redirect : redirect + "&groupId=" + groupId;
+    }
+
     private LocalDate parseDate(String value) {
         if (value == null || value.isBlank()) {
             return LocalDate.now();

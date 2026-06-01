@@ -100,13 +100,18 @@
     const data = new FormData();
     data.append('file', file);
 
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+    const csrfToken  = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const fetchHeaders = { 'Accept': 'application/json' };
+    if (csrfHeader && csrfToken) fetchHeaders[csrfHeader] = csrfToken;
+
     uploadButton.disabled = true;
     setError('Se încarcă imaginea...');
 
     fetch(uploadUrl, {
       method: 'POST',
       body: data,
-      headers: { 'Accept': 'application/json' }
+      headers: fetchHeaders
     })
       .then(async (response) => {
         const body = await response.json().catch(() => ({}));

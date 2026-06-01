@@ -136,7 +136,7 @@ public class EventWebController {
         model.addAttribute("scrollOnly", scrollOnly);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSizes", List.of(5, 10, 20, 25, 50, 100));
+        model.addAttribute("pageSizes", List.of(5, 7, 10, 20, 25, 50, 100));
         if (!model.containsAttribute("eventDto")) {
             EventDTO dto = new EventDTO();
             dto.setStatus(EventStatus.PLANNED.name());
@@ -229,7 +229,7 @@ public class EventWebController {
                 attachMeta(model);
                 return "events/form";
             }
-            Map<String, String> fieldErrors = validateEventForm(eventDto, implementedByIdRaw, true);
+            Map<String, String> fieldErrors = validateEventForm(eventDto, implementedByIdRaw, false);
             if (!fieldErrors.isEmpty()) {
                 model.addAttribute("error", "Corectează câmpurile marcate și încearcă din nou.");
                 model.addAttribute("eventFieldErrors", fieldErrors);
@@ -431,11 +431,15 @@ public class EventWebController {
         model.addAttribute("eventStatuses", EventStatus.values());
         model.addAttribute("priorities", Priority.values());
         model.addAttribute("recurrenceTypes", RecurrenceType.values());
-        model.addAttribute("persons", personService.getAllPersons().stream()
+        Long churchId = churchContextService.getOrCreateActiveChurchId();
+        model.addAttribute("persons", personRepository.findAllByChurchId(
+                        churchId,
+                        org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.asc("lastName"), org.springframework.data.domain.Sort.Order.asc("firstName")))
+                .stream()
+                .map(PersonDTO::fromEntity)
                 .sorted(Comparator.comparing(PersonDTO::getFullName, String.CASE_INSENSITIVE_ORDER))
                 .toList());
         model.addAttribute("taskStatuses", List.of("TODO", "IN_PROGRESS", "DONE"));
-        Long churchId = churchContextService.getOrCreateActiveChurchId();
         model.addAttribute("groups", groupRepository.findAllByChurchId(
                 churchId,
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.asc("type"), org.springframework.data.domain.Sort.Order.asc("name"))));
@@ -643,15 +647,15 @@ public class EventWebController {
 
     private int normalizeSize(int size) {
         return switch (size) {
-            case 5, 10, 20, 25, 50, 100 -> size;
-            default -> 10;
+            case 5, 7, 10, 20, 25, 50, 100 -> size;
+            default -> 7;
         };
     }
 
     private int defaultRowsPerPage() {
         return normalizeSize(globalSettingRepository.findBySettingKey(ROWS_KEY)
                 .map(setting -> setting.getIntValue())
-                .orElse(20));
+                .orElse(7));
     }
 
     private Map<String, String> validateEventForm(EventDTO eventDto, String implementedByIdRaw, boolean requireImplementedBy) {

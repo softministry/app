@@ -177,7 +177,7 @@
     "ALL": "All",
     "MEMBER": "Member",
     "CHILD": "Child",
-    "FREND": "Friend",
+    "FRIEND": "Friend",
     "ADHERENT": "Adherent",
     "VISITOR": "Visitor"
   },
@@ -431,6 +431,9 @@
     "priorityLabel.scazuta": "Low",
     "priorityCustomization": "Priority customization",
     "resetColors": "Reset colors",
+    "modifyFont": "Modify font",
+    "fontColor": "Font color",
+    "fontSize": "Font size (rem)",
     "applyTheme": "Apply theme",
     "themePreviewOnly": "The selected theme is only a preview until you press Apply theme.",
     "statusCustomization": "Status customization",

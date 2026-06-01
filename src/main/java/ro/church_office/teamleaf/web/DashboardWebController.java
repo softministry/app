@@ -90,7 +90,7 @@ public class DashboardWebController {
         model.addAttribute("personCount", persons.size());
         model.addAttribute("memberCount", persons.stream().filter(p -> p.getMemberType() == MemberType.MEMBER).count());
         model.addAttribute("childCount", persons.stream().filter(p -> p.getMemberType() == MemberType.CHILD).count());
-        model.addAttribute("friendCount", persons.stream().filter(p -> p.getMemberType() == MemberType.FREND).count());
+        model.addAttribute("friendCount", persons.stream().filter(p -> p.getMemberType() == MemberType.FRIEND).count());
         model.addAttribute("eventCount", eventRepository.countByChurchId(churchId));
         model.addAttribute("visitCount", visitRepository.countByChurchId(churchId));
         model.addAttribute("attendanceSummaries", attendanceService.recentSummaries(churchId, 5));
@@ -202,15 +202,15 @@ public class DashboardWebController {
             }
         }
 
-        List<AttendanceRecord> recentRecords = attendanceRecordRepository.findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescServiceSessionAscRecordedAtDesc(
+        List<AttendanceRecord> recentRecords = attendanceRecordRepository.findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescSessionAsc(
                 churchId,
                 today.minusDays(settings.analysisDays()),
                 today
         );
         Map<Long, List<AttendanceRecord>> byPerson = new LinkedHashMap<>();
         for (AttendanceRecord record : recentRecords) {
-            if (record.getPerson() == null || record.getPerson().getId() == null) continue;
-            byPerson.computeIfAbsent(record.getPerson().getId(), ignored -> new ArrayList<>()).add(record);
+            if (record.getPersonId() == null) continue;
+            byPerson.computeIfAbsent(record.getPersonId(), ignored -> new ArrayList<>()).add(record);
         }
         Set<Long> peopleWithAttendance = byPerson.keySet();
         Set<Long> peopleInGroups = peopleInGroups(churchId);
@@ -237,7 +237,7 @@ public class DashboardWebController {
             boolean allAbsent = latestRecords.stream().allMatch(record -> record.getStatus() == AttendanceStatus.ABSENT);
             if (!allAbsent) continue;
 
-            Person person = latestRecords.get(0).getPerson();
+            Person person = personRepository.findById(entry.getKey()).orElse(null);
             if (person == null || person.getId() == null) continue;
             String type = person.getMemberType() == MemberType.CHILD ? "Copil absent" : "Absență";
             if ((person.getMemberType() == MemberType.CHILD && !settings.childAbsenceEnabled())
@@ -269,7 +269,7 @@ public class DashboardWebController {
         for (Person person : persons) {
             if (person.getId() == null) continue;
             if (settings.newPersonEnabled()
-                    && person.getMemberType() == MemberType.FREND
+                    && person.getMemberType() == MemberType.FRIEND
                     && !peopleWithAttendance.contains(person.getId())
                     && !peopleWithAnyFollowUp.contains(person.getId())) {
                 String detail = "Prieten/aparținător fără prezențe sau follow-up înregistrat";

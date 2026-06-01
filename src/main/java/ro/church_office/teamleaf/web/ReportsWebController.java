@@ -211,7 +211,7 @@ public class ReportsWebController {
         }
 
         List<AttendanceRecord> attendanceRecords = attendanceRecordRepository
-                .findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescServiceSessionAscRecordedAtDesc(churchId, fromDate, toDate);
+                .findByChurchIdAndAttendanceDateBetweenOrderByAttendanceDateDescSessionAsc(churchId, fromDate, toDate);
         long presentCount = attendanceRecords.stream().filter(record -> record.getStatus() == AttendanceStatus.PRESENT).count();
         long absentCount = attendanceRecords.stream().filter(record -> record.getStatus() == AttendanceStatus.ABSENT).count();
 
@@ -266,25 +266,11 @@ public class ReportsWebController {
 
     private List<GroupAttendanceRow> attendanceByGroup(Long churchId, List<AttendanceRecord> attendanceRecords) {
         Map<Long, GroupAttendanceAccumulator> grouped = new LinkedHashMap<>();
-        for (AttendanceRecord record : attendanceRecords) {
-            if (record.getGroup() == null || record.getGroup().getId() == null) {
-                continue;
-            }
-            Long groupId = record.getGroup().getId();
-            GroupAttendanceAccumulator accumulator = grouped.computeIfAbsent(groupId, ignored -> new GroupAttendanceAccumulator(
-                    record.getGroup().getName(),
-                    record.getGroup().getType() == null ? "Fără tip" : record.getGroup().getType().name()));
-            accumulator.total++;
-            if (record.getStatus() == AttendanceStatus.PRESENT) accumulator.present++;
-            if (record.getStatus() == AttendanceStatus.ABSENT) accumulator.absent++;
-        }
-
         for (ChurchGroup group : groupRepository.findAllByChurchId(churchId, Sort.by(Sort.Order.asc("type"), Sort.Order.asc("name")))) {
             grouped.putIfAbsent(group.getId(), new GroupAttendanceAccumulator(
                     group.getName(),
                     group.getType() == null ? "Fără tip" : group.getType().name()));
         }
-
         return grouped.values().stream()
                 .map(item -> new GroupAttendanceRow(item.name, item.type, item.present, item.absent, item.total))
                 .toList();
@@ -293,14 +279,14 @@ public class ReportsWebController {
     private List<PastoralAttentionRow> pastoralAttention(List<AttendanceRecord> attendanceRecords) {
         Map<Long, PersonAttendanceAccumulator> grouped = new LinkedHashMap<>();
         for (AttendanceRecord record : attendanceRecords) {
-            if (record.getPerson() == null || record.getPerson().getId() == null) {
-                continue;
-            }
-            Person person = record.getPerson();
-            PersonAttendanceAccumulator accumulator = grouped.computeIfAbsent(person.getId(), ignored -> new PersonAttendanceAccumulator(
-                    person.getId(),
-                    personName(person),
-                    value(person.getPhone())));
+            if (record.getPersonId() == null) continue;
+            PersonAttendanceAccumulator accumulator = grouped.computeIfAbsent(record.getPersonId(), personId -> {
+                Person p = personRepository.findById(personId).orElse(null);
+                return new PersonAttendanceAccumulator(
+                        personId,
+                        p != null ? personName(p) : "—",
+                        p != null ? value(p.getPhone()) : "—");
+            });
             accumulator.total++;
             if (record.getStatus() == AttendanceStatus.PRESENT) accumulator.present++;
             if (record.getStatus() == AttendanceStatus.ABSENT) accumulator.absent++;
@@ -338,24 +324,7 @@ public class ReportsWebController {
             grouped.put(group.getId(), new SmallGroupAccumulator(group.getName(), leaderName, memberIds));
         }
 
-        for (AttendanceRecord record : attendanceRecords) {
-            if (record.getGroup() == null || record.getGroup().getId() == null) {
-                continue;
-            }
-            SmallGroupAccumulator accumulator = grouped.get(record.getGroup().getId());
-            if (accumulator == null) {
-                continue;
-            }
-            accumulator.total++;
-            if (record.getStatus() == AttendanceStatus.PRESENT) {
-                accumulator.present++;
-                if (record.getPerson() != null && record.getPerson().getId() != null) {
-                    accumulator.presentMemberIds.add(record.getPerson().getId());
-                }
-            } else if (record.getStatus() == AttendanceStatus.ABSENT) {
-                accumulator.absent++;
-            }
-        }
+        // Group-level attendance breakdown requires group tracking per record (not yet implemented).
 
         return grouped.values().stream()
                 .map(item -> {
@@ -513,13 +482,13 @@ public class ReportsWebController {
     }
 
     private String attendanceCsv(ReportData data) {
-        StringBuilder csv = new StringBuilder("Data,Program,Grup,Persoana,Status\n");
+        StringBuilder csv = new StringBuilder("Data,Program,Persoana,Status\n");
         for (AttendanceRecord record : data.attendanceRecords()) {
+            Person person = record.getPersonId() != null ? personRepository.findById(record.getPersonId()).orElse(null) : null;
             csv.append(csvLine(
                     value(record.getAttendanceDate()),
-                    record.getServiceSession() == null ? "" : record.getServiceSession().name(),
-                    record.getGroup() == null ? "Toată biserica" : value(record.getGroup().getName()),
-                    personName(record.getPerson()),
+                    record.getSession() == null ? "" : record.getSession().name(),
+                    personName(person),
                     record.getStatus() == null ? "" : record.getStatus().name()));
         }
         return csv.toString();

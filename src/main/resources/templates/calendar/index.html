@@ -56,7 +56,7 @@
              class="calendar-event-card"
              th:classappend="${occurrence.event.priority != null} ? ' priority-' + ${#strings.toLowerCase(occurrence.event.priority)} : ''"
              th:title="${occurrence.event.eventName + (occurrence.event.implementedBy != null ? ' • ' + occurrence.event.implementedBy.fullName : '')}">
-            <strong th:text="${occurrence.event.eventName}">Eveniment</strong>
+            <strong class="event-name" th:text="${occurrence.event.eventName}">Eveniment</strong>
             <span th:text="${occurrence.event.implementedBy != null ? occurrence.event.implementedBy.fullName : 'Fără responsabil'}">Responsabil</span>
           </a>
         </div>
@@ -193,5 +193,6 @@
     });
   })();
 </script>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>

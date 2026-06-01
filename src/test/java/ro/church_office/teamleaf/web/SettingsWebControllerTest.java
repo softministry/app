@@ -95,7 +95,7 @@ class SettingsWebControllerTest {
         assertNotNull(redirect.getFlashAttributes().get("success"));
 
         ArgumentCaptor<GlobalSetting> captor = ArgumentCaptor.forClass(GlobalSetting.class);
-        verify(globalSettingRepository, times(6)).save(captor.capture());
+        verify(globalSettingRepository, times(8)).save(captor.capture());
 
         Map<String, GlobalSetting> byKey = new HashMap<>();
         for (GlobalSetting setting : captor.getAllValues()) {
@@ -107,6 +107,8 @@ class SettingsWebControllerTest {
         assertEquals("false", byKey.get("private_mode").getStringValue());
         assertEquals("true", byKey.get("password_restrictions_enabled").getStringValue());
         assertEquals("false", byKey.get("password_min_six_enabled").getStringValue());
+        assertEquals("#374151", byKey.get("event_name_color").getStringValue());
+        assertEquals("#374151", byKey.get("person_name_color").getStringValue());
     }
 
     @Test

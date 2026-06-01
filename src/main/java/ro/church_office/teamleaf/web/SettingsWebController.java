@@ -48,6 +48,7 @@ import ro.church_office.teamleaf.security.PasswordPolicyService;
 
 @Controller
 @RequestMapping("/settings")
+@org.springframework.transaction.annotation.Transactional
 public class SettingsWebController {
     private static final Logger log = LoggerFactory.getLogger(SettingsWebController.class);
 
@@ -56,6 +57,12 @@ public class SettingsWebController {
     private static final String NAME_CUSTOM_KEY = "name_customization";
     private static final String REPORTS_LAYOUT_ORDER_KEY = "reports_layout_order";
     private static final String ROWS_KEY = "rows_per_page";
+    private static final String EVENT_NAME_COLOR_KEY = "event_name_color";
+    private static final String PERSON_NAME_COLOR_KEY = "person_name_color";
+    private static final String GROUP_NAME_COLOR_KEY = "group_name_color";
+    private static final String EVENT_NAME_FONT_SIZE_KEY = "event_name_font_size";
+    private static final String PERSON_NAME_FONT_SIZE_KEY = "person_name_font_size";
+    private static final String GROUP_NAME_FONT_SIZE_KEY = "group_name_font_size";
     private static final String EVENT_TASKS_ENABLED_KEY = "event_tasks_enabled";
     private static final String PRIVATE_MODE_KEY = "private_mode";
     private static final String PASSWORD_RESTRICTIONS_ENABLED_KEY = PasswordPolicyService.PASSWORD_RESTRICTIONS_ENABLED_KEY;
@@ -138,6 +145,38 @@ public class SettingsWebController {
         saveStringSetting(NAME_CUSTOM_KEY, normalizeJsonText(form.getNameCustomization(), "{}"));
         redirectAttributes.addFlashAttribute("success", "Setările de aspect au fost salvate.");
         return "redirect:/settings/appearance";
+    }
+
+    @PostMapping("/font-customization")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public ResponseEntity<?> updateFontCustomization(@RequestParam("category") String category,
+                                                     @RequestParam("color") String color,
+                                                     @RequestParam("fontSize") Double fontSize) {
+        String colorKey;
+        String sizeKey;
+
+        switch (category) {
+            case "event" -> {
+                colorKey = EVENT_NAME_COLOR_KEY;
+                sizeKey = EVENT_NAME_FONT_SIZE_KEY;
+            }
+            case "person" -> {
+                colorKey = PERSON_NAME_COLOR_KEY;
+                sizeKey = PERSON_NAME_FONT_SIZE_KEY;
+            }
+            case "group" -> {
+                colorKey = GROUP_NAME_COLOR_KEY;
+                sizeKey = GROUP_NAME_FONT_SIZE_KEY;
+            }
+            default -> {
+                return ResponseEntity.badRequest().body("Categorie invalidă.");
+            }
+        }
+
+        saveStringSetting(colorKey, normalizeHexColor(color, "#374151"));
+        saveDoubleSetting(sizeKey, fontSize != null ? fontSize : 0.93);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/church")
@@ -224,13 +263,13 @@ public class SettingsWebController {
     public String system(Model model) {
         prepareBaseModel(model, "system");
         model.addAttribute("systemForm", new SystemSettingsForm(
-                intSetting(ROWS_KEY, 20),
+                intSetting(ROWS_KEY, 7),
                 booleanSetting(EVENT_TASKS_ENABLED_KEY, true),
                 booleanSetting(PRIVATE_MODE_KEY, false),
                 booleanSetting(PASSWORD_RESTRICTIONS_ENABLED_KEY, false),
                 booleanSetting(PASSWORD_MIN_SIX_ENABLED_KEY, true),
                 booleanSetting(USER_CREATE_REQUIRE_PASSWORD_KEY, false)));
-        model.addAttribute("rowOptions", List.of(5, 10, 20, 25, 50, 100));
+        model.addAttribute("rowOptions", List.of(5, 7, 10, 20, 25, 50, 100));
         return "settings/index";
     }
 
@@ -612,10 +651,37 @@ public class SettingsWebController {
         return Math.min(max, Math.max(min, normalized));
     }
 
+    private String colorSetting(String key, String fallback) {
+        return globalSettingRepository.findByKey(key)
+                .map(GlobalSetting::getStringValue)
+                .filter(v -> v != null && v.trim().matches("^#[0-9a-fA-F]{6}$"))
+                .map(String::trim)
+                .orElse(fallback);
+    }
+
+    private double doubleSetting(String key, double fallback) {
+        return globalSettingRepository.findByKey(key)
+                .map(GlobalSetting::getStringValue)
+                .map(value -> {
+                    try {
+                        return Double.parseDouble(value.trim());
+                    } catch (Exception ex) {
+                        return fallback;
+                    }
+                })
+                .orElse(fallback);
+    }
+
+    private String normalizeHexColor(String value, String fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        String trimmed = value.trim().toLowerCase();
+        return trimmed.matches("^#[0-9a-f]{6}$") ? trimmed : fallback;
+    }
+
     private void saveStringSetting(String key, String value) {
         GlobalSetting setting = globalSettingRepository.findByKey(key).orElseGet(() -> new GlobalSetting(key, value));
         setting.setStringValue(value);
-        globalSettingRepository.save(setting);
+        globalSettingRepository.saveAndFlush(setting);
     }
 
     private void saveBooleanSetting(String key, Boolean value) {
@@ -623,14 +689,22 @@ public class SettingsWebController {
         GlobalSetting setting = globalSettingRepository.findByKey(key)
                 .orElseGet(() -> new GlobalSetting(key, String.valueOf(normalized)));
         setting.setStringValue(String.valueOf(normalized));
-        globalSettingRepository.save(setting);
+        globalSettingRepository.saveAndFlush(setting);
     }
 
     private void saveIntSetting(String key, int value) {
         GlobalSetting setting = globalSettingRepository.findByKey(key)
                 .orElseGet(() -> new GlobalSetting(key, value));
         setting.setIntValue(value);
-        globalSettingRepository.save(setting);
+        globalSettingRepository.saveAndFlush(setting);
+    }
+
+    private void saveDoubleSetting(String key, double value) {
+        String stringValue = String.format(java.util.Locale.US, "%.2f", value);
+        GlobalSetting setting = globalSettingRepository.findByKey(key)
+                .orElseGet(() -> new GlobalSetting(key, stringValue));
+        setting.setStringValue(stringValue);
+        globalSettingRepository.saveAndFlush(setting);
     }
 
     private String normalizeJsonText(String value, String fallback) {

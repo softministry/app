@@ -40,7 +40,7 @@
       <section class="settings-nav-group" aria-label="Administrare">
         <p class="settings-nav-group-title">Administrare</p>
         <a th:href="@{/settings/system}" class="link-button" th:classappend="${activeTab == 'system'} ? ' is-active' : ''" data-i18n="settings.system">Sistem</a>
-        <a th:href="@{/settings/database}" class="link-button" data-i18n="menu.databaseTools">Import/Export bază de date</a>
+        <a th:href="@{/settings/database}" class="link-button" data-i18n="menu.databaseTools">Backup</a>
         <a th:if="${headerCanManageUsers}" th:href="@{/admin/users}" class="link-button" data-i18n="menu.usersAdmin">Administrare utilizatori</a>
       </section>
       <section class="settings-nav-group" aria-label="Securitate">
@@ -525,6 +525,33 @@
         } finally {
           link.textContent = originalText;
           link.classList.remove('is-busy');
+        }
+      });
+    });
+  })();
+</script>
+<script th:if="${activeTab == 'system'}">
+  (function () {
+    document.querySelectorAll('.system-color-picker-group').forEach(function (group) {
+      var picker = group.querySelector('[data-color-picker]');
+      var text   = group.querySelector('[data-color-text]');
+      if (!picker || !text) return;
+
+      picker.addEventListener('input', function () {
+        text.value = picker.value;
+      });
+
+      text.addEventListener('input', function () {
+        var val = text.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+          picker.value = val;
+        }
+      });
+
+      text.addEventListener('blur', function () {
+        var val = text.value.trim();
+        if (!/^#[0-9a-fA-F]{6}$/.test(val)) {
+          text.value = picker.value;
         }
       });
     });

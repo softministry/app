@@ -85,19 +85,17 @@
                      th:value="${eventDto.openDate != null ? #temporals.format(eventDto.openDate, 'yyyy-MM-dd') : ''}" required />
             </label>
             <label class="field-implemented-by">
-              <span th:class="${eventDto.id == null} ? 'field-label-required' : null">
+              <span>
                 <span data-i18n="events.implemented_by">Responsabil</span>
-                <span th:if="${eventDto.id == null}" class="required-marker" aria-hidden="true">*</span>
               </span>
               <div class="autocomplete" data-person-autocomplete
                    th:attr="data-initial-id=${eventDto.implementedBy != null ? eventDto.implementedBy.id : ''},
                             data-initial-name=${eventDto.implementedBy != null ? eventDto.implementedBy.fullName : ''},
-                            data-required=${eventDto.id == null}">
+                            data-required=false">
                 <input type="text"
                        class="autocomplete-input"
                        placeholder="Caută după nume..."
                        autocomplete="off"
-                       th:required="${eventDto.id == null}"
                        data-autocomplete-input />
                 <input type="hidden"
                        name="implementedById"

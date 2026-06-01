@@ -71,7 +71,7 @@
         </div>
         <div>
           <dt data-i18n="dashboard.friends">Prieteni</dt>
-          <dd><a th:href="@{/persons(memberType='FREND')}" class="metric-sub-link" th:text="${friendCount}">0</a></dd>
+          <dd><a th:href="@{/persons(memberType='FRIEND')}" class="metric-sub-link" th:text="${friendCount}">0</a></dd>
         </div>
       </dl>
     </section>
@@ -105,7 +105,7 @@
       </div>
       <div class="dashboard-mini-list" th:if="${dueFollowUps != null and !dueFollowUps.empty}">
         <div class="dashboard-mini-row" th:each="item : ${dueFollowUps}">
-          <a th:href="@{'/follow-ups/' + ${item.id} + '/edit'}" class="plain-link"
+          <a th:href="@{'/follow-ups/' + ${item.id} + '/edit'}" class="plain-link person-name"
              th:text="${item.person != null ? ((item.person.firstName != null ? item.person.firstName : '') + ' ' + (item.person.lastName != null ? item.person.lastName : '')).trim() : 'Persoană'}">Persoană</a>
           <form th:action="@{'/follow-ups/' + ${item.id} + '/status'}" method="post" class="inline-form">
             <input type="hidden" name="status" value="DONE" />
@@ -132,7 +132,7 @@
       </div>
       <div class="dashboard-mini-list" th:if="${headerBirthdayNotifications != null and !headerBirthdayNotifications.empty}">
         <div class="dashboard-mini-row" th:each="item : ${headerBirthdayNotifications}">
-          <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link" th:text="${item.personName()}">Persoană</a>
+          <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link person-name" th:text="${item.personName()}">Persoană</a>
           <div class="dashboard-birthday-meta">
             <span th:if="${item.daysUntil() == 0}"
                   data-i18n-template="dashboard.birthdayWhenToday"
@@ -397,7 +397,7 @@
             <div class="dashboard-mini-row dashboard-inbox-row" th:each="item : ${pastoralInbox}">
               <div>
                 <span class="recommendation-type" th:text="${item.caseType()}">Tip</span>
-                <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link" th:text="${item.personName()}">Persoană</a>
+                <a th:href="@{'/persons/' + ${item.personId()}}" class="plain-link person-name" th:text="${item.personName()}">Persoană</a>
                 <span th:text="${item.reason()}">Motiv</span>
                 <span class="muted" data-i18n-template="dashboard.inboxStageRisk"
                       th:attr="data-i18n-param-stage=${item.workflowStage()},data-i18n-param-riskLevel=${item.riskLevel()},data-i18n-param-riskScore=${item.riskScore()}">Stadiu</span>
@@ -447,5 +447,6 @@
     });
   })();
 </script>
+  <th:block th:replace="~{fragments/layout :: fontCustomization}"></th:block>
 </body>
 </html>
