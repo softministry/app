@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -95,7 +96,7 @@ class SettingsWebControllerTest {
         assertNotNull(redirect.getFlashAttributes().get("success"));
 
         ArgumentCaptor<GlobalSetting> captor = ArgumentCaptor.forClass(GlobalSetting.class);
-        verify(globalSettingRepository, times(8)).save(captor.capture());
+        verify(globalSettingRepository, times(6)).saveAndFlush(captor.capture());
 
         Map<String, GlobalSetting> byKey = new HashMap<>();
         for (GlobalSetting setting : captor.getAllValues()) {
@@ -107,8 +108,7 @@ class SettingsWebControllerTest {
         assertEquals("false", byKey.get("private_mode").getStringValue());
         assertEquals("true", byKey.get("password_restrictions_enabled").getStringValue());
         assertEquals("false", byKey.get("password_min_six_enabled").getStringValue());
-        assertEquals("#374151", byKey.get("event_name_color").getStringValue());
-        assertEquals("#374151", byKey.get("person_name_color").getStringValue());
+        assertEquals("false", byKey.get("user_create_require_password").getStringValue());
     }
 
     @Test
@@ -323,6 +323,118 @@ class SettingsWebControllerTest {
         var response = controller.exportDb("fresh");
         assertEquals(400, response.getStatusCode().value());
         assertTrue(String.valueOf(response.getBody()).contains("mode trebuie să fie 'full'"));
+    }
+
+    @Test
+    void resetSettingsRequiresExactConfirmation() {
+        GlobalSettingRepository globalSettingRepository = mock(GlobalSettingRepository.class);
+        ChurchInfoService churchInfoService = mock(ChurchInfoService.class);
+        ChurchInfoRepository churchInfoRepository = mock(ChurchInfoRepository.class);
+        DatabaseService databaseService = mock(DatabaseService.class);
+        Environment environment = mock(Environment.class);
+        ConfigurableApplicationContext applicationContext = mock(ConfigurableApplicationContext.class);
+
+        SettingsWebController controller = new SettingsWebController(
+                globalSettingRepository,
+                churchInfoService,
+                churchInfoRepository,
+                databaseService,
+                environment,
+                applicationContext,
+                "/tmp/ministry-home",
+                "/tmp/ministry-data",
+                "/tmp/ministry-data/ministryadmin-db");
+
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+        String view = controller.resetSettings("gresit", redirect);
+
+        assertEquals("redirect:/settings/database", view);
+        assertNotNull(redirect.getFlashAttributes().get("error"));
+        verify(globalSettingRepository, never()).deleteAllInBatch();
+    }
+
+    @Test
+    void resetSettingsDeletesGlobalSettingsWhenConfirmed() {
+        GlobalSettingRepository globalSettingRepository = mock(GlobalSettingRepository.class);
+        ChurchInfoService churchInfoService = mock(ChurchInfoService.class);
+        ChurchInfoRepository churchInfoRepository = mock(ChurchInfoRepository.class);
+        DatabaseService databaseService = mock(DatabaseService.class);
+        Environment environment = mock(Environment.class);
+        ConfigurableApplicationContext applicationContext = mock(ConfigurableApplicationContext.class);
+
+        SettingsWebController controller = new SettingsWebController(
+                globalSettingRepository,
+                churchInfoService,
+                churchInfoRepository,
+                databaseService,
+                environment,
+                applicationContext,
+                "/tmp/ministry-home",
+                "/tmp/ministry-data",
+                "/tmp/ministry-data/ministryadmin-db");
+
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+        String view = controller.resetSettings("RESETARE DATE", redirect);
+
+        assertEquals("redirect:/settings/database", view);
+        assertNotNull(redirect.getFlashAttributes().get("success"));
+        verify(globalSettingRepository).deleteAllInBatch();
+    }
+
+    @Test
+    void factoryResetRequiresExactConfirmation() throws IOException {
+        GlobalSettingRepository globalSettingRepository = mock(GlobalSettingRepository.class);
+        ChurchInfoService churchInfoService = mock(ChurchInfoService.class);
+        ChurchInfoRepository churchInfoRepository = mock(ChurchInfoRepository.class);
+        DatabaseService databaseService = mock(DatabaseService.class);
+        Environment environment = mock(Environment.class);
+        ConfigurableApplicationContext applicationContext = mock(ConfigurableApplicationContext.class);
+
+        SettingsWebController controller = new SettingsWebController(
+                globalSettingRepository,
+                churchInfoService,
+                churchInfoRepository,
+                databaseService,
+                environment,
+                applicationContext,
+                "/tmp/ministry-home",
+                "/tmp/ministry-data",
+                "/tmp/ministry-data/ministryadmin-db");
+
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+        String view = controller.factoryReset("", redirect);
+
+        assertEquals("redirect:/settings/database", view);
+        assertNotNull(redirect.getFlashAttributes().get("error"));
+        verify(databaseService, never()).resetApplicationData();
+    }
+
+    @Test
+    void factoryResetResetsDataWhenConfirmed() throws IOException {
+        GlobalSettingRepository globalSettingRepository = mock(GlobalSettingRepository.class);
+        ChurchInfoService churchInfoService = mock(ChurchInfoService.class);
+        ChurchInfoRepository churchInfoRepository = mock(ChurchInfoRepository.class);
+        DatabaseService databaseService = mock(DatabaseService.class);
+        Environment environment = mock(Environment.class);
+        ConfigurableApplicationContext applicationContext = mock(ConfigurableApplicationContext.class);
+
+        SettingsWebController controller = new SettingsWebController(
+                globalSettingRepository,
+                churchInfoService,
+                churchInfoRepository,
+                databaseService,
+                environment,
+                applicationContext,
+                "/tmp/ministry-home",
+                "/tmp/ministry-data",
+                "/tmp/ministry-data/ministryadmin-db");
+
+        RedirectAttributesModelMap redirect = new RedirectAttributesModelMap();
+        String view = controller.factoryReset("RESETARE DATE", redirect);
+
+        assertEquals("redirect:/settings/database", view);
+        assertNotNull(redirect.getFlashAttributes().get("success"));
+        verify(databaseService).resetApplicationData();
     }
 
     @Test

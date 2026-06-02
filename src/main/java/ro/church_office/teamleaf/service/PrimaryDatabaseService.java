@@ -3,7 +3,9 @@ package ro.church_office.teamleaf.service;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ro.church_office.info.api.DatabaseService;
 
@@ -38,10 +40,12 @@ import java.util.zip.ZipOutputStream;
 public class PrimaryDatabaseService extends DatabaseService {
     private final DataSource dataSource;
     private final Environment environment;
+    private final JdbcTemplate jdbcTemplate;
 
     public PrimaryDatabaseService(DataSource dataSource, Environment environment) {
         this.dataSource = dataSource;
         this.environment = environment;
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @Override
@@ -64,6 +68,53 @@ public class PrimaryDatabaseService extends DatabaseService {
             return;
         }
         throw new IOException("Tip de bază de date ne-suportat pentru import: " + jdbcUrl);
+    }
+
+    @Override
+    @Transactional
+    public void resetApplicationData() throws IOException {
+        try {
+            for (String table : resetTableOrder()) {
+                jdbcTemplate.update("DELETE FROM " + table);
+            }
+            resetKnownSqliteSequences();
+        } catch (Exception ex) {
+            throw new IOException("Resetarea datelor a eșuat: " + ex.getMessage(), ex);
+        }
+    }
+
+    private java.util.List<String> resetTableOrder() {
+        return java.util.List.of(
+                "event_task",
+                "pastoral_follow_up",
+                "church_group_members",
+                "events",
+                "church_group",
+                "attendance_records",
+                "pastoral_private_note",
+                "pastoral_recommendation_dismissal",
+                "finance_transaction_scope",
+                "financial_transaction",
+                "visit",
+                "person",
+                "church_info",
+                "global_setting");
+    }
+
+    private void resetKnownSqliteSequences() {
+        String jdbcUrl = environment.getProperty("spring.datasource.url", "");
+        if (!jdbcUrl.toLowerCase(Locale.ROOT).startsWith("jdbc:sqlite:")) {
+            return;
+        }
+        try {
+            jdbcTemplate.update("DELETE FROM sqlite_sequence WHERE name IN (" +
+                    resetTableOrder().stream()
+                            .map(table -> "'" + table + "'")
+                            .collect(java.util.stream.Collectors.joining(",")) +
+                    ")");
+        } catch (Exception ignored) {
+            // sqlite_sequence exists only after AUTOINCREMENT tables have been created.
+        }
     }
 
     private InputStream exportSqliteFile(boolean fresh, String jdbcUrl) throws IOException {

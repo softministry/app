@@ -33,19 +33,15 @@
         </div>
         <div>
           <h2 class="backup-card-title">Salvează backup</h2>
-          <p class="muted compact">Descarcă o copie completă a datelor aplicației.</p>
+          <p class="muted compact">Salvează o copie completă a datelor aplicației.</p>
         </div>
       </div>
       <div class="backup-card-body">
         <div class="backup-action-row">
-          <div class="backup-action-info">
-            <span class="backup-action-label">Arhivă completă</span>
-            <span class="muted compact">Baza de date în format .zip</span>
-          </div>
           <a th:href="@{/settings/system/export(mode='full')}"
              class="button primary backup-btn js-export-link">
             <span class="material-icons" aria-hidden="true">download</span>
-            Descarcă
+            Crează copie de siguranță
           </a>
         </div>
         <div class="backup-checksum-panel" id="exportChecksumRow" hidden>
@@ -73,10 +69,6 @@
         <div class="backup-card-icon-wrap backup-icon-restore">
           <span class="material-icons" aria-hidden="true">settings_backup_restore</span>
         </div>
-        <div>
-          <h2 class="backup-card-title">Restaurează din backup</h2>
-          <p class="muted compact">Înlocuiește datele curente cu o arhivă salvată anterior.</p>
-        </div>
       </div>
       <div class="backup-card-body">
         <div class="backup-action-row backup-file-row">
@@ -87,10 +79,6 @@
           <input type="file" name="file" accept=".zip" class="backup-file-input" />
         </div>
         <div class="backup-restore-footer">
-          <p class="muted compact backup-restore-hint">
-            <span class="material-icons" aria-hidden="true">info</span>
-            Verifică arhiva înainte de restaurare pentru a confirma că este validă.
-          </p>
           <div class="backup-restore-actions">
             <button type="submit"
                     th:formaction="@{/settings/system/import/validate}"
@@ -105,9 +93,97 @@
           </div>
         </div>
       </div>
-    </form>
+	    </form>
 
-  </div>
+	    <!-- Resetare la setările din fabrică -->
+	    <section class="backup-card backup-card-reset">
+	      <div class="backup-card-header">
+	        <div class="backup-card-icon-wrap backup-icon-reset">
+	          <span class="material-icons" aria-hidden="true">restart_alt</span>
+	        </div>
+	        <div>
+	          <h2 class="backup-card-title">Resetare la setările din fabrică</h2>
+	          <p class="muted compact">Alege dacă resetezi doar setările sau și datele aplicației.</p>
+	        </div>
+	      </div>
+	      <div class="backup-card-body">
+	        <div class="backup-action-row">
+	          <div class="backup-action-info">
+	            <span class="backup-action-label">Resetare setări</span>
+	            <span class="muted compact">Revine la valorile implicite fără să șteargă persoane, grupuri sau evenimente.</span>
+	          </div>
+	          <button type="button"
+	                  class="button ghost backup-btn"
+	                  data-reset-open
+	                  data-reset-form-id="resetSettingsForm"
+	                  data-reset-title="Confirmă resetarea setărilor"
+	                  data-reset-message="Setările vor reveni la valorile implicite. Datele operaționale rămân păstrate.">
+	            <span class="material-icons" aria-hidden="true">tune</span>
+	            Resetează
+	          </button>
+	        </div>
+	        <div class="backup-action-row">
+	          <div class="backup-action-info">
+	            <span class="backup-action-label">Resetare cu ștergere date</span>
+	            <span class="muted compact">Șterge datele operaționale și setările. Conturile de utilizator rămân active.</span>
+	          </div>
+	          <button type="button"
+	                  class="button primary backup-btn backup-reset-danger-btn"
+	                  data-reset-open
+	                  data-reset-form-id="factoryResetForm"
+	                  data-reset-title="Confirmă ștergerea datelor"
+	                  data-reset-message="Datele operaționale și setările vor fi șterse. Conturile de utilizator rămân active.">
+	            <span class="material-icons" aria-hidden="true">delete_forever</span>
+	            Șterge
+	          </button>
+	        </div>
+	        <form method="post" th:action="@{/settings/database/reset-settings}" id="resetSettingsForm" class="backup-hidden-form">
+	          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+	          <input type="hidden" name="confirmation" data-reset-confirmation />
+	        </form>
+	        <form method="post" th:action="@{/settings/database/factory-reset}" id="factoryResetForm" class="backup-hidden-form">
+	          <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+	          <input type="hidden" name="confirmation" data-reset-confirmation />
+	        </form>
+	      </div>
+	    </section>
+
+	  </div>
+	</div>
+
+<div class="backup-confirm-modal" data-reset-modal hidden>
+  <div class="backup-confirm-backdrop" data-reset-close></div>
+  <section class="backup-confirm-panel" role="dialog" aria-modal="true" aria-labelledby="backup-confirm-title">
+    <div class="backup-confirm-header">
+      <div class="backup-card-icon-wrap backup-icon-reset">
+        <span class="material-icons" aria-hidden="true">warning</span>
+      </div>
+      <div>
+        <h2 id="backup-confirm-title" class="backup-card-title" data-reset-modal-title>Confirmă resetarea</h2>
+        <p class="muted compact" data-reset-modal-message></p>
+      </div>
+      <button type="button" class="icon-button" aria-label="Închide" data-reset-close>
+        <span class="material-icons" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="backup-confirm-body">
+      <p class="backup-reset-warning">
+        <span class="material-icons" aria-hidden="true">warning</span>
+        <span>Pentru confirmare, scrie exact <strong>RESETARE DATE</strong>.</span>
+      </p>
+      <label class="backup-confirm-field">
+        <span class="backup-action-label">Confirmare</span>
+        <input type="text" autocomplete="off" data-reset-modal-input />
+      </label>
+    </div>
+    <div class="backup-confirm-actions">
+      <button type="button" class="button ghost backup-btn" data-reset-close>Anulează</button>
+      <button type="button" class="button primary backup-btn backup-reset-danger-btn" data-reset-submit>
+        <span class="material-icons" aria-hidden="true">check</span>
+        Confirmă
+      </button>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -187,6 +263,75 @@
           link.innerHTML = originalHtml;
         }
       });
+    });
+  })();
+
+  (function () {
+    const modal = document.querySelector('[data-reset-modal]');
+    if (!modal) return;
+
+    const title = modal.querySelector('[data-reset-modal-title]');
+    const message = modal.querySelector('[data-reset-modal-message]');
+    const input = modal.querySelector('[data-reset-modal-input]');
+    const submitButton = modal.querySelector('[data-reset-submit]');
+    const openButtons = Array.from(document.querySelectorAll('[data-reset-open]'));
+    const closeButtons = Array.from(modal.querySelectorAll('[data-reset-close]'));
+    let targetForm = null;
+
+    function closeModal() {
+      modal.hidden = true;
+      document.body.classList.remove('modal-open');
+      targetForm = null;
+      if (input) input.value = '';
+    }
+
+    function openModal(button) {
+      targetForm = document.getElementById(button.dataset.resetFormId || '');
+      if (!targetForm) return;
+
+      if (title) title.textContent = button.dataset.resetTitle || 'Confirmă resetarea';
+      if (message) message.textContent = button.dataset.resetMessage || '';
+      if (input) input.value = '';
+
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      setTimeout(function () {
+        if (input) input.focus();
+      }, 0);
+    }
+
+    openButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        openModal(button);
+      });
+    });
+
+    closeButtons.forEach(function (button) {
+      button.addEventListener('click', closeModal);
+    });
+
+    if (submitButton) {
+      submitButton.addEventListener('click', function () {
+        if (!targetForm || !input) return;
+        const confirmation = targetForm.querySelector('[data-reset-confirmation]');
+        if (confirmation) confirmation.value = input.value;
+        targetForm.submit();
+      });
+    }
+
+    if (input) {
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          if (submitButton) submitButton.click();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !modal.hidden) {
+        closeModal();
+      }
     });
   })();
 </script>

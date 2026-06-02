@@ -92,6 +92,7 @@ public class SettingsWebController {
     private static final long MAX_IMPORT_TOTAL_UNZIPPED_BYTES = 2L * 1024L * 1024L * 1024L; // 2 GB
     private static final int MAX_IMPORT_ZIP_ENTRIES = 10_000;
     private static final DateTimeFormatter EXPORT_FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+    private static final String FACTORY_RESET_CONFIRMATION = "RESETARE DATE";
 
     private final GlobalSettingRepository globalSettingRepository;
     private final ChurchInfoService churchInfoService;
@@ -432,6 +433,40 @@ public class SettingsWebController {
         } catch (Exception ex) {
             log.error("Dry-run import validation failed.", ex);
             redirectAttributes.addFlashAttribute("error", "Nu s-a putut valida arhiva: " + ex.getMessage());
+        }
+        return "redirect:/settings/database";
+    }
+
+    @PostMapping("/database/reset-settings")
+    public String resetSettings(@RequestParam(value = "confirmation", required = false) String confirmation,
+                                RedirectAttributes redirectAttributes) {
+        if (!FACTORY_RESET_CONFIRMATION.equals(normalizeText(confirmation, ""))) {
+            redirectAttributes.addFlashAttribute("error", "Confirmarea nu este corectă. Scrie exact: " + FACTORY_RESET_CONFIRMATION + ".");
+            return "redirect:/settings/database";
+        }
+        try {
+            globalSettingRepository.deleteAllInBatch();
+            redirectAttributes.addFlashAttribute("success", "Setările au fost resetate la valorile implicite.");
+        } catch (Exception ex) {
+            log.error("Settings reset failed.", ex);
+            redirectAttributes.addFlashAttribute("error", "Resetarea setărilor a eșuat: " + ex.getMessage());
+        }
+        return "redirect:/settings/database";
+    }
+
+    @PostMapping("/database/factory-reset")
+    public String factoryReset(@RequestParam(value = "confirmation", required = false) String confirmation,
+                               RedirectAttributes redirectAttributes) {
+        if (!FACTORY_RESET_CONFIRMATION.equals(normalizeText(confirmation, ""))) {
+            redirectAttributes.addFlashAttribute("error", "Confirmarea nu este corectă. Scrie exact: " + FACTORY_RESET_CONFIRMATION + ".");
+            return "redirect:/settings/database";
+        }
+        try {
+            databaseService.resetApplicationData();
+            redirectAttributes.addFlashAttribute("success", "Datele și setările au fost resetate. Conturile de utilizator au fost păstrate.");
+        } catch (Exception ex) {
+            log.error("Factory reset failed.", ex);
+            redirectAttributes.addFlashAttribute("error", ex.getMessage() == null ? "Resetarea datelor a eșuat." : ex.getMessage());
         }
         return "redirect:/settings/database";
     }
